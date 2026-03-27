@@ -1,0 +1,20 @@
+# Interne Entwicklungsdokumente
+DELIVERY_SUMMARY.md
+INDEX.md
+TESTING.md
+MIGRATION_house_name.sql
+
+# Backup-Dateien
+*.backup
+
+# VS Code Verbindungsdaten
+.vscode/sftp.json
+
+# Windows-Dateien
+Thumbs.db
+desktop.ini
+*.db
+CONFIGURATION.md
+INSTALLATION.md
+QUICK_REFERENCE.md
+SAMPLE_DATA.sql
