@@ -23,9 +23,9 @@ function rpgmaps_info()
         'name' => 'RPG Maps Plugin',
         'description' => 'Manage fantasy city maps, building plots, and house ownership with administrative approval system',
         'website' => '',
-        'author' => 'Admin',
-        'authorsite' => '',
-        'version' => '1.0.0',
+        'author' => 'pand0rica',
+        'authorsite' => 'https://github.com/pand0rica',
+        'version' => '1.1.0',
         'codename' => 'rpgmaps',
         'compatibility' => '18*',
         'pl' => 0,
@@ -39,7 +39,7 @@ function rpgmaps_info()
 function rpgmaps_install()
 {
     global $db;
-    
+
     // Include database setup
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/installer.php';
     rpgmaps_install_tables();
@@ -47,6 +47,7 @@ function rpgmaps_install()
     rpgmaps_install_settings();
     rpgmaps_install_hooks();
     rpgmaps_install_css();
+    rpgmaps_install_alert_type();
 }
 
 /**
@@ -58,6 +59,8 @@ function rpgmaps_activate()
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/installer.php';
     rpgmaps_update_templates();
     rpgmaps_update_tables();
+    rpgmaps_update_css();
+    rpgmaps_install_alert_type();
 }
 
 /**
@@ -67,9 +70,10 @@ function rpgmaps_activate()
 function rpgmaps_uninstall()
 {
     global $db;
-    
+
     // Include database setup
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/installer.php';
+    rpgmaps_uninstall_alert_type();
     rpgmaps_uninstall_tables();
     rpgmaps_uninstall_templates();
     rpgmaps_uninstall_settings();
@@ -112,8 +116,8 @@ function rpgmaps_ajax_hook()
     global $mybb;
     
     // Get the sub-action from AJAX request
-    $sub = isset($_REQUEST['sub']) ? $_REQUEST['sub'] : '';
-    
+    $sub = $mybb->get_input('sub', MyBB::INPUT_STRING);
+
     if (!empty($sub) && strpos($sub, 'rpgmaps_') === 0) {
         // Load AJAX handler
         require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/ajax.php';
@@ -177,6 +181,8 @@ function rpgmaps_admin_menu_hook(&$sub_menu)
 require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/hooks.php';
 
 // Register hooks
+$plugins->add_hook('global_intermediate', 'rpgmaps_build_nav');
+$plugins->add_hook('global_intermediate', 'rpgmaps_register_myalerts_formatter', 20);
 $plugins->add_hook('action_start', 'rpgmaps_frontend_action_hook');
 $plugins->add_hook('ajax_rpgmaps', 'rpgmaps_ajax_hook');
 $plugins->add_hook('user_delete', 'rpgmaps_user_delete_hook');
@@ -184,6 +190,5 @@ $plugins->add_hook('admin_action_handler', 'rpgmaps_admin_action_hook');
 $plugins->add_hook('admin_permissions', 'rpgmaps_admin_permissions');
 $plugins->add_hook('admin_tools_menu', 'rpgmaps_admin_menu_hook');
 $plugins->add_hook('admin_tools_action_handler', 'rpgmaps_admin_action_hook');
-$plugins->add_hook('index_start', 'rpgmaps_index_notification');
-$plugins->add_hook('modcp_nav', 'rpgmaps_modcp_nav');
+$plugins->add_hook('index_end', 'rpgmaps_index_notification');
 $plugins->add_hook('modcp_start', 'rpgmaps_modcp_handler');

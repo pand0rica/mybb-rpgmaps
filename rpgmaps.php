@@ -67,15 +67,18 @@ if ($map_id <= 0) {
     $map_list_items = '';
     if (!empty($maps)) {
         foreach ($maps as $map) {
-            $map_list_items .= '<div class="rpgmaps-map-item">
-                <h3><a href="rpgmaps.php?map_id=' . (int)$map['id'] . '">' . htmlspecialchars_uni($map['title']) . '</a></h3>
-                <p>' . htmlspecialchars_uni($map['description']) . '</p>
-                <p><strong>Größe:</strong> ' . (int)$map['width'] . ' x ' . (int)$map['height'] . ' px</p>
-                <a href="rpgmaps.php?map_id=' . (int)$map['id'] . '" class="button">Karte ansehen</a>
-            </div>';
+            $map_url = $mybb->settings['bburl'] . '/rpgmaps.php?map_id=' . (int)$map['id'];
+            $map_list_items .= '<tr>
+                <td class="trow1">
+                    <strong><a href="' . $map_url . '">' . htmlspecialchars_uni($map['title']) . '</a></strong>
+                    <div class="smalltext">' . htmlspecialchars_uni($map['description']) . '</div>
+                    <br />
+                    <a href="' . $map_url . '" class="button">' . $lang->rpgmaps_view_map . '</a>
+                </td>
+            </tr>';
         }
     } else {
-        $map_list_items = '<p>' . $lang->rpgmaps_no_maps . '</p>';
+        $map_list_items = '<tr><td class="trow1" align="center">' . $lang->rpgmaps_no_maps . '</td></tr>';
     }
     
     // Prepare variables for template
@@ -146,15 +149,18 @@ if ($map_id <= 0) {
             // Check if there's a pending build request for this plot
             $has_pending = $db_helper->hasPendingBuildRequest($plot['id']);
             
-            if (!$has_pending) {
-                // Free plot without pending request - show it
+            if ($has_pending) {
+                // Pending plot - show in yellow with building info
+                $plot_overlays .= '<div class="rpgmaps-plot rpgmaps-plot-pending" data-plotid="' . (int)$plot['id'] . '" data-pending="1" ' . $data_attrs . ' style="' . $style . '">';
+                $plot_overlays .= '<div class="rpgmaps-plot-info">' . htmlspecialchars_uni($lang->rpgmaps_plot_building) . '</div>';
+                $plot_overlays .= '</div>';
+            } else {
+                // Free plot - show in green
                 $tooltip = htmlspecialchars_uni($plot['tooltip_text']);
-                
                 $plot_overlays .= '<div class="rpgmaps-plot rpgmaps-plot-free" data-plotid="' . (int)$plot['id'] . '" ' . $data_attrs . ' style="' . $style . '">';
                 $plot_overlays .= '<div class="rpgmaps-plot-info">' . $tooltip . '</div>';
                 $plot_overlays .= '</div>';
             }
-            // If has_pending is true, we simply don't render anything for this plot
         }
     }
     
@@ -198,6 +204,12 @@ if ($map_id <= 0) {
         'occupants' => $lang->rpgmaps_occupants,
         'role_owner' => $lang->rpgmaps_role_owner,
         'role_resident' => $lang->rpgmaps_role_resident,
+        'build_success' => $lang->rpgmaps_build_success,
+        'build_pending_info' => $lang->rpgmaps_build_pending_info,
+        'plot_building' => $lang->rpgmaps_plot_building,
+        'close' => $lang->rpgmaps_close,
+        'no_occupants' => $lang->rpgmaps_no_occupants,
+        'house_settings' => $lang->rpgmaps_house_settings,
     ]);
     
     // Prepare all variables for template
@@ -205,7 +217,8 @@ if ($map_id <= 0) {
     $rpgmaps_map_orig_width = (int)$map['width'];
     $rpgmaps_map_orig_height = (int)$map['height'];
     $rpgmaps_ajax_url = $mybb->settings['bburl'] . '/rpgmaps.php';
-    $rpgmaps_container_attributes = 'data-csrf-token="' . $rpgmaps_csrf_token . '" data-map-id="' . $rpgmaps_map_id . '" data-logged-in="' . $rpgmaps_is_logged_in . '" data-user-id="' . $rpgmaps_user_id . '" data-lang="' . htmlspecialchars($rpgmaps_lang_json) . '" data-orig-width="' . $rpgmaps_map_orig_width . '" data-orig-height="' . $rpgmaps_map_orig_height . '" data-ajax-url="' . htmlspecialchars_uni($rpgmaps_ajax_url) . '"';
+    $rpgmaps_assets_url = $mybb->settings['bburl'] . '/inc/plugins/rpgmaps/assets/';
+    $rpgmaps_container_attributes = 'data-csrf-token="' . $rpgmaps_csrf_token . '" data-map-id="' . $rpgmaps_map_id . '" data-logged-in="' . $rpgmaps_is_logged_in . '" data-user-id="' . $rpgmaps_user_id . '" data-lang="' . htmlspecialchars($rpgmaps_lang_json) . '" data-orig-width="' . $rpgmaps_map_orig_width . '" data-orig-height="' . $rpgmaps_map_orig_height . '" data-ajax-url="' . htmlspecialchars_uni($rpgmaps_ajax_url) . '" data-assets-url="' . htmlspecialchars_uni($rpgmaps_assets_url) . '"';
     
     // Build full page with myBB theme
     eval('$page = "' . $templates->get('rpgmaps_frontend') . '";');

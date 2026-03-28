@@ -51,7 +51,7 @@ function rpgmaps_modcp_pending_list()
     
     add_breadcrumb($lang->modcp, 'modcp.php');
     add_breadcrumb('RPG Maps', 'modcp.php?action=rpgmaps');
-    
+
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
     $db_helper = new RPGMapsDatabase();
     

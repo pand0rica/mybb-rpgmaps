@@ -14,6 +14,8 @@ if (!defined('IN_MYBB')) {
 $l['rpgmaps_name'] = 'RPG Maps';
 $l['rpgmaps_description'] = 'Manage fantasy city maps and building plots';
 $l['rpgmaps_maps'] = 'RPG Maps';
+$l['rpgmaps_nav_maps'] = 'Maps';
+$l['rpgmaps_view_map'] = 'View Map';
 $l['rpgmaps_plugin_disabled'] = 'The RPG Maps plugin is currently disabled.';
 $l['rpgmaps_map_not_found'] = 'The requested map could not be found.';
 
@@ -24,6 +26,7 @@ $l['rpgmaps_select_map'] = 'Select a map:';
 $l['rpgmaps_map_description'] = 'Description:';
 
 $l['rpgmaps_plot_free'] = 'Free Building Plot';
+$l['rpgmaps_plot_building'] = 'A new house is being built here.';
 $l['rpgmaps_plot_pending'] = 'Build Request Pending';
 $l['rpgmaps_plot_built'] = 'Built Plot';
 
@@ -81,7 +84,9 @@ $l['rpgmaps_house_full'] = 'This house is at maximum capacity';
 $l['rpgmaps_already_resident'] = 'You are already a resident of this house';
 $l['rpgmaps_not_resident'] = 'You are not a resident of this house';
 
-$l['rpgmaps_build_success'] = 'Build request submitted successfully';
+$l['rpgmaps_build_success'] = 'Build request submitted!';
+$l['rpgmaps_build_pending_info'] = 'Your build request has been submitted and is awaiting approval from a team member.';
+$l['rpgmaps_close'] = 'Close';
 $l['rpgmaps_move_in_success'] = 'Move-in request submitted successfully';
 $l['rpgmaps_move_out_success'] = 'Move-out request submitted successfully';
 
@@ -148,3 +153,8 @@ $l['rpgmaps_admin_action_type'] = 'Action Type';
 $l['rpgmaps_admin_action_user'] = 'User';
 $l['rpgmaps_admin_action_date'] = 'Date';
 $l['rpgmaps_admin_action_status'] = 'Status';
+
+// MyAlerts notification strings
+$l['rpgmaps_house_settings'] = 'House Settings';
+
+$l['rpgmaps_alert_build_approved'] = 'Your build request for plot {1} on map {2} has been approved!';

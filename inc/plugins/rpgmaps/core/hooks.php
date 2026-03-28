@@ -12,6 +12,48 @@ if (!defined('IN_MYBB')) {
 }
 
 /**
+ * Register RPG Maps alert formatter with MyAlerts (if active)
+ * Runs at global_intermediate priority 20, after MyAlerts sets up its instances at priority 10
+ */
+function rpgmaps_register_myalerts_formatter()
+{
+    if (!function_exists('myalerts_create_instances')) {
+        return;
+    }
+
+    $formatterManager = MybbStuff_MyAlerts_AlertFormatterManager::getInstance();
+    if (!$formatterManager) {
+        return;
+    }
+
+    global $mybb, $lang;
+
+    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/src/Formatter/BuildApprovedFormatter.php';
+
+    $formatterManager->registerFormatter(
+        new RPGMaps_Formatter_BuildApproved($mybb, $lang, 'rpgmaps_build_approved')
+    );
+}
+
+/**
+ * Build navigation item for the header
+ */
+function rpgmaps_build_nav()
+{
+    global $templates, $rpgmaps_nav, $mybb, $lang;
+
+    $rpgmaps_nav = '';
+
+    if (empty($mybb->settings['rpgmaps_enabled'])) {
+        return;
+    }
+
+    $lang->load('rpgmaps');
+    $rpgmaps_nav_active = (THIS_SCRIPT == 'rpgmaps.php') ? 'class="selected_navi"' : '';
+    eval('$rpgmaps_nav = "' . $templates->get('rpgmaps_nav') . '";');
+}
+
+/**
  * Handle user deletion hook
  * @param int $uid User ID being deleted
  */
@@ -37,85 +79,74 @@ function rpgmaps_handle_user_deletion($uid)
  */
 function rpgmaps_index_notification()
 {
-    global $mybb, $db, $templates, $rpgmaps_notification;
-    
-    // Initialize variable
-    $rpgmaps_notification = '';
-    
-    // Check if user is staff (admin or moderator)
+    global $mybb, $db, $header;
+
     if ($mybb->usergroup['cancp'] != 1 && $mybb->usergroup['canmodcp'] != 1) {
         return;
     }
-    
-    // Only proceed if plugin is installed
+
     if (!$db->table_exists('rpgmaps_actions')) {
         return;
     }
-    
+
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
     $db_helper = new RPGMapsDatabase();
-    
-    $pending_actions = $db_helper->getPendingActions();
-    $count = count($pending_actions);
-    
-    if ($count > 0) {
-        $plural = ($count == 1) ? '' : 's';
-        $link_acp = '';
-        $link_modcp = '';
-        
-        if ($mybb->usergroup['cancp'] == 1) {
-            $link_acp = ' <a href="' . $mybb->settings['bburl'] . '/admin/index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions">[Admin-CP]</a>';
-        }
-        if ($mybb->usergroup['canmodcp'] == 1) {
-            $link_modcp = ' <a href="modcp.php?action=rpgmaps"">[Mod-CP]</a>';
-        }
-        
-        // Set template variable
-        $rpgmaps_notification = '<div class="pm_alert">
-            <strong>RPG Maps:</strong> Es gibt ' . $count . ' ausstehende Bauanträge/Anfrage' . $plural . ' zu prüfen.' . $link_acp . $link_modcp . '
-        </div>';
+
+    $count = count($db_helper->getPendingActions());
+
+    if ($count < 1) {
+        return;
     }
+
+    $links = '';
+    if ($mybb->usergroup['canmodcp'] == 1) {
+        $links .= ' &mdash; <a href="' . $mybb->settings['bburl'] . '/modcp.php?action=rpgmaps">Mod-CP</a>';
+    }
+    if ($mybb->usergroup['cancp'] == 1) {
+        $links .= ' &mdash; <a href="' . $mybb->settings['bburl'] . '/admin/index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions">Admin-CP</a>';
+    }
+
+    $text = ($count == 1)
+        ? 'Es gibt 1 ausstehenden Bauantrag zu pr&uuml;fen.'
+        : 'Es gibt ' . (int)$count . ' ausstehende Bauantr&auml;ge zu pr&uuml;fen.';
+
+    $header .= '<div class="pm_alert"><strong>RPG Maps:</strong> ' . $text . $links . '</div>';
 }
 
 /**
- * Add ModCP navigation item
- */
-function rpgmaps_modcp_nav()
-{
-    global $mybb, $templates, $modcp_nav, $db, $lang;
-    
-    // Check if user can access ModCP
-    if ($mybb->usergroup['canmodcp'] != 1) {
-        return;
-    }
-    
-    // Only proceed if plugin is installed
-    if (!$db->table_exists('rpgmaps_actions')) {
-        return;
-    }
-    
-    $lang->load('rpgmaps');
-    
-    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
-    $db_helper = new RPGMapsDatabase();
-    $pending_count = count($db_helper->getPendingActions());
-    
-    $count_badge = '';
-    if ($pending_count > 0) {
-        $count_badge = ' <span class="rpgmaps-pending-badge">' . $pending_count . '</span>';
-    }
-    
-    eval('$modcp_nav .= "' . $templates->get('modcp_nav_rpgmaps') . '";');
-}
-
-/**
- * Handle ModCP actions
+ * Add ModCP nav item and handle ModCP actions
+ * Runs at modcp_start — after $modcp_nav is fully compiled (line 250 in modcp.php)
  */
 function rpgmaps_modcp_handler()
 {
-    global $mybb;
-    
-    if ($mybb->input['action'] == 'rpgmaps') {
+    global $mybb, $db, $lang, $templates, $modcp_nav;
+
+    if ($mybb->usergroup['canmodcp'] != 1) {
+        return;
+    }
+
+    if (!$db->table_exists('rpgmaps_actions')) {
+        return;
+    }
+
+    $lang->load('rpgmaps');
+
+    // Insert nav item inside the compiled $modcp_nav table (before closing </table>)
+    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
+    $db_helper = new RPGMapsDatabase();
+    $pending_count = count($db_helper->getPendingActions());
+    $count_badge = $pending_count > 0
+        ? ' <span class="rpgmaps-pending-badge">' . (int)$pending_count . '</span>'
+        : '';
+    $nav_item = '';
+    eval('$nav_item = "' . $templates->get('modcp_nav_rpgmaps') . '";');
+    $insert_pos = strrpos($modcp_nav, '</table>');
+    if ($insert_pos !== false) {
+        $modcp_nav = substr_replace($modcp_nav, $nav_item, $insert_pos, 0);
+    }
+
+    // Handle rpgmaps action
+    if ($mybb->get_input('action') === 'rpgmaps') {
         require_once MYBB_ROOT . 'inc/plugins/rpgmaps/modules/modcp/rpgmaps_modcp.php';
         rpgmaps_modcp_main();
         exit;
