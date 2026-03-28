@@ -379,13 +379,14 @@ class RPGMapsManager
         }
 
         // Create house with requested max_occupants, selected type, and description
+        global $db;
         $house_data = [
             'plot_id' => $plot_id,
             'type_id' => $house_type_id,
             'status' => 'active',
             'max_occupants' => $max_occupants,
-            'description' => $description,
-            'house_name' => $house_name,
+            'description' => $db->escape_string($description),
+            'house_name' => $db->escape_string($house_name),
             'created_by' => $user_id,
             'approved_at' => TIME_NOW,
         ];

@@ -588,7 +588,7 @@ class RPGMapsDatabase
             'status' => 'approved',
             'reviewed_by' => (int)$reviewed_by,
             'reviewed_at' => TIME_NOW,
-            'admin_note' => $admin_note,
+            'admin_note' => $this->db->escape_string($admin_note),
         ];
         
         $this->db->update_query(
@@ -610,7 +610,7 @@ class RPGMapsDatabase
             'status' => 'rejected',
             'reviewed_by' => (int)$reviewed_by,
             'reviewed_at' => TIME_NOW,
-            'admin_note' => $admin_note,
+            'admin_note' => $this->db->escape_string($admin_note),
         ];
         
         $this->db->update_query(
