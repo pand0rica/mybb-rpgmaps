@@ -260,9 +260,11 @@ function rpgmaps_admin_maps_add()
     $page->output_nav_tabs($sub_tabs, 'maps');
     
     if ($mybb->request_method == 'post') {
+        verify_post_check($mybb->get_input('my_post_key'));
+
         require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
         $db_helper = new RPGMapsDatabase();
-        
+
         // Handle file upload
         $filename = '';
         if (isset($_FILES['map_image']) && $_FILES['map_image']['error'] == UPLOAD_ERR_OK) {
@@ -270,14 +272,14 @@ function rpgmaps_admin_maps_add()
             if (!is_dir($upload_dir)) {
                 mkdir($upload_dir, 0755, true);
             }
-            
+
             $file_ext = strtolower(pathinfo($_FILES['map_image']['name'], PATHINFO_EXTENSION));
             $allowed_exts = array('png', 'jpg', 'jpeg', 'gif');
-            
+
             if (in_array($file_ext, $allowed_exts)) {
                 $filename = 'map_' . time() . '.' . $file_ext;
                 $target_path = $upload_dir . $filename;
-                
+
                 if (move_uploaded_file($_FILES['map_image']['tmp_name'], $target_path)) {
                     // File uploaded successfully
                 } else {
@@ -292,17 +294,17 @@ function rpgmaps_admin_maps_add()
             // No file uploaded, use placeholder
             $filename = 'placeholder.png';
         }
-        
+
         $map_data = array(
-            'title' => $mybb->get_input('title'),
-            'description' => $mybb->get_input('description'),
+            'title' => $db->escape_string($mybb->get_input('title')),
+            'description' => $db->escape_string($mybb->get_input('description')),
             'width' => $mybb->get_input('width', MyBB::INPUT_INT),
             'height' => $mybb->get_input('height', MyBB::INPUT_INT),
-            'filename' => $filename
+            'filename' => $db->escape_string($filename)
         );
-        
+
         $map_id = $db_helper->createMap($map_data);
-        
+
         flash_message($lang->rpgmaps_map_added, 'success');
         admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
     }
@@ -357,22 +359,24 @@ function rpgmaps_admin_maps_edit()
     $page->output_nav_tabs($sub_tabs, 'maps');
     
     if ($mybb->request_method == 'post') {
+        verify_post_check($mybb->get_input('my_post_key'));
+
         // Handle file upload if provided
         $filename = $map['filename']; // Keep existing filename by default
-        
+
         if (isset($_FILES['map_image']) && $_FILES['map_image']['error'] == UPLOAD_ERR_OK) {
             $upload_dir = MYBB_ROOT . 'inc/plugins/rpgmaps/assets/maps/';
             if (!is_dir($upload_dir)) {
                 mkdir($upload_dir, 0755, true);
             }
-            
+
             $file_ext = strtolower(pathinfo($_FILES['map_image']['name'], PATHINFO_EXTENSION));
             $allowed_exts = array('png', 'jpg', 'jpeg', 'gif');
-            
+
             if (in_array($file_ext, $allowed_exts)) {
                 $new_filename = 'map_' . time() . '.' . $file_ext;
                 $target_path = $upload_dir . $new_filename;
-                
+
                 if (move_uploaded_file($_FILES['map_image']['tmp_name'], $target_path)) {
                     // Delete old file if it exists and is not placeholder
                     if ($filename != 'placeholder.png' && file_exists($upload_dir . $filename)) {
@@ -388,18 +392,18 @@ function rpgmaps_admin_maps_edit()
                 admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_edit&id=' . $map_id);
             }
         }
-        
+
         $map_data = array(
-            'title' => $mybb->get_input('title'),
-            'description' => $mybb->get_input('description'),
+            'title' => $db->escape_string($mybb->get_input('title')),
+            'description' => $db->escape_string($mybb->get_input('description')),
             'width' => $mybb->get_input('width', MyBB::INPUT_INT),
             'height' => $mybb->get_input('height', MyBB::INPUT_INT),
             'scale_factor' => $mybb->get_input('scale_factor', MyBB::INPUT_FLOAT),
-            'filename' => $filename
+            'filename' => $db->escape_string($filename)
         );
-        
+
         $db_helper->updateMap($map_id, $map_data);
-        
+
         flash_message($lang->rpgmaps_map_updated, 'success');
         admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
     }
@@ -570,40 +574,41 @@ function rpgmaps_admin_buildplots_add()
     $page->output_nav_tabs($sub_tabs, 'maps');
     
     if ($mybb->request_method == 'post') {
+        verify_post_check($mybb->get_input('my_post_key'));
+
         $plot_key = trim($mybb->get_input('plot_key'));
-        
+
         // Auto-generate plot_key if not provided
         if (empty($plot_key)) {
-            // Generate unique plot_key: use timestamp + random number
             $plot_key = 'plot_' . time() . '_' . mt_rand(1000, 9999);
         }
-        
+
         // Get and normalize rotation value (0-360)
         $rotation = $mybb->get_input('rotation', MyBB::INPUT_INT);
         $rotation = $rotation % 360;
         if ($rotation < 0) {
             $rotation += 360;
         }
-        
+
         $plot_data = array(
             'map_id' => $map_id,
-            'plot_key' => $plot_key,
+            'plot_key' => $db->escape_string($plot_key),
             'x' => $mybb->get_input('x', MyBB::INPUT_INT),
             'y' => $mybb->get_input('y', MyBB::INPUT_INT),
             'w' => $mybb->get_input('w', MyBB::INPUT_INT),
             'h' => $mybb->get_input('h', MyBB::INPUT_INT),
             'rotation' => $rotation,
-            'tooltip_text' => $mybb->get_input('tooltip_text'),
+            'tooltip_text' => $db->escape_string($mybb->get_input('tooltip_text')),
             'status' => 'free'
         );
-        
+
         $plot_id = $db_helper->insertPlot($plot_data);
-        
+
         flash_message('Bauplatz wurde erfolgreich hinzugefügt', 'success');
         admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots&map_id=' . $map_id);
     }
-    
-    $form = new Form('index.php?module=tools-rpgmaps&action=rpgmaps', 'post');
+
+    $form = new Form('index.php?module=tools-rpgmaps&action=rpgmaps', 'post', '', 1);
     echo $form->generate_hidden_field('sub', 'buildplots_add');
     echo $form->generate_hidden_field('map_id', $map_id);
     
@@ -659,30 +664,32 @@ function rpgmaps_admin_buildplots_edit()
     $page->output_nav_tabs($sub_tabs, 'maps');
     
     if ($mybb->request_method == 'post') {
+        verify_post_check($mybb->get_input('my_post_key'));
+
         // Get and normalize rotation value (0-360)
         $rotation = $mybb->get_input('rotation', MyBB::INPUT_INT);
         $rotation = $rotation % 360;
         if ($rotation < 0) {
             $rotation += 360;
         }
-        
+
         $plot_data = array(
-            'plot_key' => $mybb->get_input('plot_key'),
+            'plot_key' => $db->escape_string($mybb->get_input('plot_key')),
             'x' => $mybb->get_input('x', MyBB::INPUT_INT),
             'y' => $mybb->get_input('y', MyBB::INPUT_INT),
             'w' => $mybb->get_input('w', MyBB::INPUT_INT),
             'h' => $mybb->get_input('h', MyBB::INPUT_INT),
             'rotation' => $rotation,
-            'tooltip_text' => $mybb->get_input('tooltip_text')
+            'tooltip_text' => $db->escape_string($mybb->get_input('tooltip_text'))
         );
-        
+
         $db_helper->updatePlot($plot_id, $plot_data);
-        
+
         flash_message('Bauplatz wurde erfolgreich aktualisiert', 'success');
         admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots&map_id=' . $plot['map_id']);
     }
-    
-    $form = new Form('index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots_edit&id=' . $plot_id, 'post');
+
+    $form = new Form('index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots_edit&id=' . $plot_id, 'post', '', 1);
     
     $form_container = new FormContainer('Bauplatz bearbeiten');
     $form_container->output_row('Plot Key', '', $form->generate_text_box('plot_key', $plot['plot_key'], array('id' => 'plot_key')), 'plot_key');
@@ -802,9 +809,11 @@ function rpgmaps_admin_house_types_add()
     $page->output_nav_tabs($sub_tabs, 'house_types');
     
     if ($mybb->request_method == 'post') {
+        verify_post_check($mybb->get_input('my_post_key'));
+
         require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
         $db_helper = new RPGMapsDatabase();
-        
+
         // Handle file upload
         $filename = '';
         if (isset($_FILES['house_image']) && $_FILES['house_image']['error'] == UPLOAD_ERR_OK) {
@@ -812,14 +821,14 @@ function rpgmaps_admin_house_types_add()
             if (!is_dir($upload_dir)) {
                 mkdir($upload_dir, 0755, true);
             }
-            
+
             $file_ext = strtolower(pathinfo($_FILES['house_image']['name'], PATHINFO_EXTENSION));
             $allowed_exts = array('png', 'jpg', 'jpeg', 'gif');
-            
+
             if (in_array($file_ext, $allowed_exts)) {
                 $filename = 'house_' . time() . '.' . $file_ext;
                 $target_path = $upload_dir . $filename;
-                
+
                 if (move_uploaded_file($_FILES['house_image']['tmp_name'], $target_path)) {
                     // File uploaded successfully
                 } else {
@@ -834,16 +843,16 @@ function rpgmaps_admin_house_types_add()
             // No file uploaded, use placeholder
             $filename = 'placeholder.png';
         }
-        
+
         $type_data = array(
-            'name' => $mybb->get_input('name'),
-            'description' => $mybb->get_input('description'),
-            'asset_filename' => $filename,
+            'name' => $db->escape_string($mybb->get_input('name')),
+            'description' => $db->escape_string($mybb->get_input('description')),
+            'asset_filename' => $db->escape_string($filename),
             'icon_scale' => $mybb->get_input('icon_scale', MyBB::INPUT_FLOAT)
         );
-        
+
         $type_id = $db_helper->createHouseType($type_data);
-        
+
         flash_message($lang->rpgmaps_house_type_added, 'success');
         admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types');
     }
@@ -897,22 +906,24 @@ function rpgmaps_admin_house_types_edit()
     $page->output_nav_tabs($sub_tabs, 'house_types');
     
     if ($mybb->request_method == 'post') {
+        verify_post_check($mybb->get_input('my_post_key'));
+
         // Handle file upload if provided
         $filename = $type['asset_filename']; // Keep existing filename by default
-        
+
         if (isset($_FILES['house_image']) && $_FILES['house_image']['error'] == UPLOAD_ERR_OK) {
             $upload_dir = MYBB_ROOT . 'inc/plugins/rpgmaps/assets/houses/';
             if (!is_dir($upload_dir)) {
                 mkdir($upload_dir, 0755, true);
             }
-            
+
             $file_ext = strtolower(pathinfo($_FILES['house_image']['name'], PATHINFO_EXTENSION));
             $allowed_exts = array('png', 'jpg', 'jpeg', 'gif');
-            
+
             if (in_array($file_ext, $allowed_exts)) {
                 $new_filename = 'house_' . time() . '.' . $file_ext;
                 $target_path = $upload_dir . $new_filename;
-                
+
                 if (move_uploaded_file($_FILES['house_image']['tmp_name'], $target_path)) {
                     // Delete old file if it exists and is not placeholder
                     if ($filename != 'placeholder.png' && file_exists($upload_dir . $filename)) {
@@ -928,16 +939,16 @@ function rpgmaps_admin_house_types_edit()
                 admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_edit&id=' . $type_id);
             }
         }
-        
+
         $type_data = array(
-            'name' => $mybb->get_input('name'),
-            'description' => $mybb->get_input('description'),
+            'name' => $db->escape_string($mybb->get_input('name')),
+            'description' => $db->escape_string($mybb->get_input('description')),
             'icon_scale' => $mybb->get_input('icon_scale', MyBB::INPUT_FLOAT),
-            'asset_filename' => $filename
+            'asset_filename' => $db->escape_string($filename)
         );
-        
+
         $db_helper->updateHouseType($type_id, $type_data);
-        
+
         flash_message($lang->rpgmaps_house_type_updated, 'success');
         admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types');
     }

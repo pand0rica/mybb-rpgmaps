@@ -37,12 +37,11 @@ function rpgmaps_handle_db_error($function_name, $error)
     $message = $error instanceof Exception ? $error->getMessage() : (string)$error;
     $db_error = isset($db->error) ? $db->error : 'Database error';
     
-    // Return error response
+    // Return error response (db_error intentionally omitted to prevent info disclosure)
     rpgmaps_json_output([
         'success' => false,
         'message' => $message,
         'error' => $message,
-        'db_error' => $db_error,
     ]);
 }
 
