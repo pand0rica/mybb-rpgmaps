@@ -401,10 +401,13 @@ class RPGMapsManager
         
         // Approve action
         $this->db->approveAction($action_id, $admin_id, $admin_note);
-        
+
+        // Send MyAlerts notification to the requesting user
+        $this->sendBuildApprovedAlert($user_id, $plot_id, $house_id);
+
         // Log action
         $this->logAction('BUILD_APPROVED', $admin_id, $plot_id, "House $house_id created (max " . $max_occupants . " occupants)");
-        
+
         return [
             'success' => true,
             'message' => 'Build request approved. House created.',
@@ -594,6 +597,49 @@ class RPGMapsManager
     }
     
     /**
+     * Send a MyAlerts notification when a build request is approved.
+     * Silently skips if MyAlerts is not installed or not active.
+     *
+     * @param int $user_id  The user who submitted the build request
+     * @param int $plot_id  The plot that was approved
+     * @param int $house_id The newly created house
+     */
+    protected function sendBuildApprovedAlert($user_id, $plot_id, $house_id)
+    {
+        if (!function_exists('myalerts_create_instances')) {
+            return;
+        }
+
+        $alertManager     = MybbStuff_MyAlerts_AlertManager::getInstance();
+        $alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::getInstance();
+
+        if (!$alertManager || !$alertTypeManager) {
+            return;
+        }
+
+        $alertType = $alertTypeManager->getByCode('rpgmaps_build_approved');
+        if (!$alertType) {
+            return;
+        }
+
+        // Gather extra details for the formatter (plot key + map title + map id)
+        $plot      = $this->db->getPlotById($plot_id);
+        $map       = ($plot && isset($plot['map_id'])) ? $this->db->getMapById($plot['map_id']) : null;
+        $plot_key  = $plot  ? $plot['plot_key']   : '';
+        $map_title = $map   ? $map['title']        : '';
+        $map_id    = $map   ? (int)$map['id']      : 0;
+
+        $alert = new MybbStuff_MyAlerts_Entity_Alert((int)$user_id, $alertType, (int)$house_id);
+        $alert->setExtraDetails(array(
+            'plot_key'  => $plot_key,
+            'map_title' => $map_title,
+            'map_id'    => $map_id,
+        ));
+
+        $alertManager->addAlert($alert);
+    }
+
+    /**
      * Log an action for administrative purposes
      * @param string $action_type
      * @param int $user_id
@@ -602,8 +648,5 @@ class RPGMapsManager
      */
     protected function logAction($action_type, $user_id, $target_id, $details)
     {
-        // You could store these in a separate log table
-        // For now, just document the structure
-        // TODO: Implement logging to separate table or file
     }
 }

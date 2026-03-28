@@ -195,45 +195,57 @@ function rpgmaps_install_templates()
 <body>
 {$header}
 {$rpgmaps_notification}
+<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
+<tr>
+<td class="thead"><strong>{$rpgmaps_map_title}</strong></td>
+</tr>
+<tr>
+<td class="trow1">
+<p class="smalltext">{$rpgmaps_map_description}</p>
 <div class="rpgmaps-container" {$rpgmaps_container_attributes}>
-    <h1>{$rpgmaps_map_title}</h1>
-    <p>{$rpgmaps_map_description}</p>
-    <div class="rpgmaps-map-wrapper" id="rpgmaps-map-{$rpgmaps_map_id}" data-map-id="{$rpgmaps_map_id}" data-ajax-url="{$mybb->settings[\'bburl\']}/rpgmaps.php">
+    <div class="rpgmaps-map-wrapper" id="rpgmaps-map-{$rpgmaps_map_id}">
         <img src="{$rpgmaps_map_image}" alt="{$rpgmaps_map_title}" class="rpgmaps-map-image">
         <div id="rpgmaps-overlay-{$rpgmaps_map_id}" class="rpgmaps-overlay">
             {$rpgmaps_plot_overlays}
         </div>
     </div>
 </div>
+</td>
+</tr>
+</table>
+<br />
 
-<!-- Build House Modal -->
 <div id="rpgmaps-modal-build" class="rpgmaps-modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2>Haus bauen</h2>
-        <form id="form-build-house" method="post">
-            <input type="hidden" name="action" value="build_house">
-            <input type="hidden" name="plot_id" id="build-plot-id" value="">
-            <div class="form-group">
-                <label>Haustyp w&auml;hlen:</label>
-                <select name="type_id" id="house-type-select" required>
-                    {$rpgmaps_house_type_options}
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Maximale Bewohner:</label>
-                <input type="number" name="max_occupants" id="max-occupants-input" min="1" max="20" value="5" required>
-            </div>
-            <div class="form-group">
-                <label>Beschreibung (optional):</label>
-                <textarea name="description" id="house-description-input" rows="3" placeholder="Beschreibe dein Haus..."></textarea>
-            </div>
+    <div class="modal-content tborder trow1">
+        <div class="rpgmaps-modal-header thead">
+            <strong>Haus bauen</strong>
+            <span class="close">&times;</span>
+        </div>
+        <div class="rpgmaps-modal-body">
+            <form id="form-build-house" method="post">
+                <input type="hidden" name="action" value="build_house">
+                <input type="hidden" name="plot_id" id="build-plot-id" value="">
+                <div class="form-group">
+                    <label>Haustyp w&auml;hlen:</label>
+                    <select name="type_id" id="house-type-select" required>
+                        {$rpgmaps_house_type_options}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Maximale Bewohner:</label>
+                    <input type="number" name="max_occupants" id="max-occupants-input" min="1" max="20" value="5" required>
+                </div>
+                <div class="form-group">
+                    <label>Beschreibung (optional):</label>
+                    <textarea name="description" id="house-description-input" rows="3" placeholder="Beschreibe dein Haus..."></textarea>
+                </div>
                 <div class="form-group">
                     <label>Hausname (optional):</label>
                     <input type="text" name="house_name" id="house-name-input" maxlength="255" placeholder="z. B. Eichenhof">
                 </div>
-            <button type="submit" class="button">Bauantrag einreichen</button>
-        </form>
+                <button type="submit" class="button">Bauantrag einreichen</button>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -248,12 +260,14 @@ function rpgmaps_install_templates()
 </head>
 <body>
 {$header}
-<div class="rpgmaps-container">
-    <h1>{$lang->rpgmaps_map_list_title}</h1>
-    <div class="rpgmaps-map-list">
-        {$rpgmaps_map_list}
-    </div>
-</div>
+{$rpgmaps_notification}
+<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
+<tr>
+<td class="thead"><strong>{$lang->rpgmaps_maps}</strong></td>
+</tr>
+{$rpgmaps_map_list}
+</table>
+<br />
 {$footer}
 </body>
 </html>'),
@@ -269,21 +283,25 @@ function rpgmaps_install_templates()
 </div>'),
 
         'rpgmaps_modal_build' => $db->escape_string('<div id="rpgmaps-modal-build" class="rpgmaps-modal">
-    <div class="modal-content">
-        <span class="close" onclick="rpgmaps_close_modal(\'build\')">&times;</span>
-        <h2>{$rpgmaps_build_house}</h2>
-        <form id="form-build-house" method="post">
-            <input type="hidden" name="action" value="rpgmaps">
-            <input type="hidden" name="sub" value="build_house">
-            <input type="hidden" name="plot_id" id="build-plot-id" value="">
-            <div class="form-group">
-                <label>{$rpgmaps_select_house_type}</label>
-                <select name="type_id" id="house-type-select" required>
-                    <option value="">{$rpgmaps_choose_type}</option>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary">{$rpgmaps_submit_build_request}</button>
-        </form>
+    <div class="modal-content tborder trow1">
+        <div class="rpgmaps-modal-header thead">
+            <strong>{$rpgmaps_build_house}</strong>
+            <span class="close" onclick="rpgmaps_close_modal(\'build\')">&times;</span>
+        </div>
+        <div class="rpgmaps-modal-body">
+            <form id="form-build-house" method="post">
+                <input type="hidden" name="action" value="rpgmaps">
+                <input type="hidden" name="sub" value="build_house">
+                <input type="hidden" name="plot_id" id="build-plot-id" value="">
+                <div class="form-group">
+                    <label>{$rpgmaps_select_house_type}</label>
+                    <select name="type_id" id="house-type-select" required>
+                        <option value="">{$rpgmaps_choose_type}</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">{$rpgmaps_submit_build_request}</button>
+            </form>
+        </div>
     </div>
 </div>'),
 
@@ -320,8 +338,13 @@ function rpgmaps_install_templates()
 </body>
 </html>'),
 
+        // Navigation item for the header
+        'rpgmaps_nav' => $db->escape_string('<li {$rpgmaps_nav_active}><a href="{$mybb->settings[\'bburl\']}/rpgmaps.php">{$lang->rpgmaps_nav_maps}</a></li>'),
+
         // ACP templates will be in admin modules
     ];
+
+    rpgmaps_add_nav_to_header();
 
     foreach ($templates as $name => $template) {
         // Check if template group exists for rpgmaps
@@ -364,11 +387,74 @@ function rpgmaps_uninstall_templates()
 {
     global $db;
 
+    rpgmaps_remove_nav_from_header();
+
     // Delete templates
     $db->delete_query('templates', "title LIKE 'rpgmaps_%'");
 
     // Delete template group
     $db->delete_query('templategroups', "prefix = 'rpgmaps'");
+}
+
+/**
+ * Insert {$rpgmaps_nav} before the search toplink in the header template.
+ * Falls back to inserting before the first </ul> if the search link is not found.
+ */
+function rpgmaps_add_nav_to_header()
+{
+    global $db;
+
+    $query = $db->simple_select('templates', 'template', "title = 'header' AND sid = '-2'");
+    $row = $db->fetch_array($query);
+
+    if (!$row) {
+        // Master template (sid = -1) as fallback
+        $query = $db->simple_select('templates', 'template', "title = 'header' AND sid = '-1'");
+        $row = $db->fetch_array($query);
+    }
+
+    if (!$row || strpos($row['template'], '{$rpgmaps_nav}') !== false) {
+        return; // Not found or already inserted
+    }
+
+    $content = $row['template'];
+
+    // Find the <li> that contains toplinks_search and insert before it
+    $search_pos = strpos($content, 'toplinks_search');
+    if ($search_pos !== false) {
+        $li_pos = strrpos(substr($content, 0, $search_pos), '<li');
+        if ($li_pos !== false) {
+            $content = substr($content, 0, $li_pos) . '{$rpgmaps_nav}' . "\n" . substr($content, $li_pos);
+        }
+    } else {
+        // Fallback: insert before first </ul>
+        $ul_pos = strpos($content, '</ul>');
+        if ($ul_pos !== false) {
+            $content = substr($content, 0, $ul_pos) . '{$rpgmaps_nav}' . "\n" . substr($content, $ul_pos);
+        }
+    }
+
+    $db->update_query('templates', array('template' => $db->escape_string($content)), "title = 'header' AND sid = '-2'");
+}
+
+/**
+ * Remove {$rpgmaps_nav} from the header template.
+ */
+function rpgmaps_remove_nav_from_header()
+{
+    global $db;
+
+    $query = $db->simple_select('templates', 'template', "title = 'header' AND sid = '-2'");
+    $row = $db->fetch_array($query);
+
+    if (!$row || strpos($row['template'], '{$rpgmaps_nav}') === false) {
+        return;
+    }
+
+    $content = str_replace('{$rpgmaps_nav}' . "\n", '', $row['template']);
+    $content = str_replace('{$rpgmaps_nav}', '', $content);
+
+    $db->update_query('templates', array('template' => $db->escape_string($content)), "title = 'header' AND sid = '-2'");
 }
 
 /**
@@ -378,8 +464,9 @@ function rpgmaps_update_templates()
 {
     global $db;
 
-    // Update rpgmaps_frontend template with max_occupants field
-    $new_template = $db->escape_string('<html>
+    rpgmaps_add_nav_to_header();
+
+    $new_frontend = $db->escape_string('<html>
 <head>
 <title>{$mybb->settings[\'bbname\']} - {$rpgmaps_map_title}</title>
 {$headerinclude}
@@ -387,45 +474,57 @@ function rpgmaps_update_templates()
 <body>
 {$header}
 {$rpgmaps_notification}
+<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
+<tr>
+<td class="thead"><strong>{$rpgmaps_map_title}</strong></td>
+</tr>
+<tr>
+<td class="trow1">
+<p class="smalltext">{$rpgmaps_map_description}</p>
 <div class="rpgmaps-container" {$rpgmaps_container_attributes}>
-    <h1>{$rpgmaps_map_title}</h1>
-    <p>{$rpgmaps_map_description}</p>
-    <div class="rpgmaps-map-wrapper" id="rpgmaps-map-{$rpgmaps_map_id}" data-map-id="{$rpgmaps_map_id}" data-ajax-url="{$mybb->settings[\'bburl\']}/rpgmaps.php">
+    <div class="rpgmaps-map-wrapper" id="rpgmaps-map-{$rpgmaps_map_id}">
         <img src="{$rpgmaps_map_image}" alt="{$rpgmaps_map_title}" class="rpgmaps-map-image">
         <div id="rpgmaps-overlay-{$rpgmaps_map_id}" class="rpgmaps-overlay">
             {$rpgmaps_plot_overlays}
         </div>
     </div>
 </div>
+</td>
+</tr>
+</table>
+<br />
 
-<!-- Build House Modal -->
 <div id="rpgmaps-modal-build" class="rpgmaps-modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2>Haus bauen</h2>
-        <form id="form-build-house" method="post">
-            <input type="hidden" name="action" value="build_house">
-            <input type="hidden" name="plot_id" id="build-plot-id" value="">
-            <div class="form-group">
-                <label>Haustyp w&auml;hlen:</label>
-                <select name="type_id" id="house-type-select" required>
-                    {$rpgmaps_house_type_options}
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Maximale Bewohner:</label>
-                <input type="number" name="max_occupants" id="max-occupants-input" min="1" max="20" value="5" required>
-            </div>
-            <div class="form-group">
-                <label>Beschreibung (optional):</label>
-                <textarea name="description" id="house-description-input" rows="3" placeholder="Beschreibe dein Haus..."></textarea>
-            </div>
+    <div class="modal-content tborder trow1">
+        <div class="rpgmaps-modal-header thead">
+            <strong>Haus bauen</strong>
+            <span class="close">&times;</span>
+        </div>
+        <div class="rpgmaps-modal-body">
+            <form id="form-build-house" method="post">
+                <input type="hidden" name="action" value="build_house">
+                <input type="hidden" name="plot_id" id="build-plot-id" value="">
+                <div class="form-group">
+                    <label>Haustyp w&auml;hlen:</label>
+                    <select name="type_id" id="house-type-select" required>
+                        {$rpgmaps_house_type_options}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Maximale Bewohner:</label>
+                    <input type="number" name="max_occupants" id="max-occupants-input" min="1" max="20" value="5" required>
+                </div>
+                <div class="form-group">
+                    <label>Beschreibung (optional):</label>
+                    <textarea name="description" id="house-description-input" rows="3" placeholder="Beschreibe dein Haus..."></textarea>
+                </div>
                 <div class="form-group">
                     <label>Hausname (optional):</label>
                     <input type="text" name="house_name" id="house-name-input" maxlength="255" placeholder="z. B. Eichenhof">
                 </div>
-            <button type="submit" class="button">Bauantrag einreichen</button>
-        </form>
+                <button type="submit" class="button">Bauantrag einreichen</button>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -433,7 +532,39 @@ function rpgmaps_update_templates()
 </body>
 </html>');
 
-    $db->update_query('templates', ['template' => $new_template], "title = 'rpgmaps_frontend'");
+    $new_map_list = $db->escape_string('<html>
+<head>
+<title>{$mybb->settings[\'bbname\']} - {$lang->rpgmaps_maps}</title>
+{$headerinclude}
+</head>
+<body>
+{$header}
+{$rpgmaps_notification}
+<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
+<tr>
+<td class="thead"><strong>{$lang->rpgmaps_maps}</strong></td>
+</tr>
+{$rpgmaps_map_list}
+</table>
+<br />
+{$footer}
+</body>
+</html>');
+
+    $db->update_query('templates', array('template' => $new_frontend), "title = 'rpgmaps_frontend'");
+    $db->update_query('templates', array('template' => $new_map_list), "title = 'rpgmaps_map_list'");
+
+    // Add rpgmaps_nav template if it doesn't exist yet (for installations before nav feature)
+    $existing = $db->simple_select('templates', 'title', "title = 'rpgmaps_nav'");
+    if (!$db->fetch_array($existing)) {
+        $db->insert_query('templates', array(
+            'title' => 'rpgmaps_nav',
+            'template' => $db->escape_string('<li {$rpgmaps_nav_active}><a href="{$mybb->settings[\'bburl\']}/rpgmaps.php">{$lang->rpgmaps_nav_maps}</a></li>'),
+            'sid' => -1,
+            'version' => 1833,
+            'dateline' => TIME_NOW,
+        ));
+    }
 }
 
 /**
@@ -577,6 +708,120 @@ function rpgmaps_install_hooks()
 function rpgmaps_uninstall_hooks()
 {
     // Hooks are automatically removed when plugin is disabled
+}
+
+/**
+ * Helper: load MyAlerts classes if available.
+ * @return bool True if classes are available, false otherwise.
+ */
+function rpgmaps_load_myalerts_classes()
+{
+    if (class_exists('MybbStuff_MyAlerts_AlertTypeManager')) {
+        return true;
+    }
+
+    if (!defined('MYALERTS_PLUGIN_PATH')) {
+        define('MYALERTS_PLUGIN_PATH', MYBB_ROOT . 'inc/plugins/MybbStuff/MyAlerts');
+    }
+    if (!defined('MYBBSTUFF_CORE_PATH')) {
+        define('MYBBSTUFF_CORE_PATH', MYBB_ROOT . 'inc/plugins/MybbStuff/Core/');
+    }
+
+    $loader_path = MYBBSTUFF_CORE_PATH . 'ClassLoader.php';
+    if (!is_readable($loader_path)) {
+        return false;
+    }
+
+    require_once $loader_path;
+    $classLoader = new MybbStuff_Core_ClassLoader();
+    $classLoader->registerNamespace(
+        'MybbStuff_MyAlerts',
+        array(MYALERTS_PLUGIN_PATH . '/src')
+    );
+    $classLoader->register();
+
+    return class_exists('MybbStuff_MyAlerts_AlertTypeManager');
+}
+
+/**
+ * Register MyAlerts alert type for build-request approval notifications.
+ */
+function rpgmaps_install_alert_type()
+{
+    global $db, $cache;
+
+    if (!$db->table_exists('alert_types')) {
+        return; // MyAlerts not installed
+    }
+
+    if (!rpgmaps_load_myalerts_classes()) {
+        return;
+    }
+
+    $alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::createInstance($db, $cache);
+
+    $alertType = new MybbStuff_MyAlerts_Entity_AlertType();
+    $alertType->setCode('rpgmaps_build_approved');
+    $alertType->setEnabled(true);
+    $alertType->setCanBeUserDisabled(true);
+    $alertType->setDefaultUserEnabled(true);
+
+    $alertTypeManager->add($alertType);
+}
+
+/**
+ * Remove MyAlerts alert type on uninstall.
+ */
+function rpgmaps_uninstall_alert_type()
+{
+    global $db, $cache;
+
+    if (!$db->table_exists('alert_types')) {
+        return;
+    }
+
+    if (!rpgmaps_load_myalerts_classes()) {
+        return;
+    }
+
+    $alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::createInstance($db, $cache);
+    $alertTypeManager->deleteByCode('rpgmaps_build_approved');
+}
+
+/**
+ * Update CSS stylesheet in DB (for existing installations)
+ */
+function rpgmaps_update_css()
+{
+    global $db;
+
+    require_once MYBB_ADMIN_DIR . "inc/functions_themes.php";
+
+    $css_file = MYBB_ROOT . 'inc/plugins/rpgmaps/assets/rpgmaps.css';
+    if (!file_exists($css_file)) {
+        return;
+    }
+
+    $css_content = file_get_contents($css_file);
+    if ($css_content === false) {
+        return;
+    }
+
+    $existing = $db->simple_select('themestylesheets', 'sid', "name = 'rpgmaps.css'");
+    if ($db->num_rows($existing) > 0) {
+        $db->update_query('themestylesheets', [
+            'stylesheet'   => $db->escape_string($css_content),
+            'lastmodified' => TIME_NOW,
+        ], "name = 'rpgmaps.css'");
+    } else {
+        rpgmaps_install_css();
+        return;
+    }
+
+    $tids = $db->simple_select('themes', 'tid');
+    while ($theme = $db->fetch_array($tids)) {
+        update_theme_stylesheet_list($theme['tid']);
+    }
 }
 
 /**

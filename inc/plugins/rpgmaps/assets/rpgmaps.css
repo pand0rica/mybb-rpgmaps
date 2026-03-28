@@ -1,9 +1,18 @@
 /**
  * RPG Maps Plugin - Frontend CSS
  * Styles for map display, plots, tooltips, and modals
- * 
+ *
  * @package rpgmaps
  */
+
+/* ========================================
+   Plugin Variables – anpassen nach Bedarf
+   ======================================== */
+:root {
+    --rpgmaps-bg:          #ffffff; /* Hintergrund von Modal und Tooltip */
+    --rpgmaps-accent:      #4a6fa5; /* Akzentfarbe: Modal-Header, Tooltip-Header, Rahmen */
+    --rpgmaps-accent-text: #ffffff; /* Textfarbe auf Akzentfarbe */
+}
 
 /* Main container */
 .rpgmaps-container {
@@ -19,7 +28,7 @@
     background: #fff;
     border: 2px solid #ccc;
     border-radius: 4px;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -27,6 +36,7 @@
     display: block;
     width: 100%;
     height: auto;
+    border-radius: 2px;
 }
 
 .rpgmaps-overlay {
@@ -63,6 +73,16 @@
 .rpgmaps-plot-free:hover {
     background: rgba(0, 255, 0, 0.4);
     box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
+}
+
+/* Pending plot - build request submitted, awaiting approval */
+.rpgmaps-plot-pending {
+    background: rgba(255, 200, 0, 0.25);
+}
+
+.rpgmaps-plot-pending:hover {
+    background: rgba(255, 200, 0, 0.45);
+    box-shadow: 0 0 15px rgba(255, 200, 0, 0.6);
 }
 
 /* Built plot - has house image */
@@ -111,9 +131,7 @@
 /* Tooltip styles */
 .rpgmaps-tooltip {
     position: fixed;
-    background: var(--h4w-trow1-bg);
-    border: 2px solid var(--h4w-highlight1);
-    border-radius: 6px;
+    border-radius: 4px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     max-width: 400px;
     max-height: calc(100vh - 16px);
@@ -127,9 +145,7 @@
 }
 
 .rpgmaps-tooltip .tooltip-header {
-    background: var(--h4w-highlight1);
-    padding: 12px 15px;
-    border-radius: 4px 4px 0 0;
+    padding: 8px 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -138,30 +154,25 @@
 .rpgmaps-tooltip .tooltip-header h3 {
     margin: 0;
     padding: 0;
-    font-size: 16px;
+    font-size: 15px;
 }
 
 .rpgmaps-tooltip .tooltip-close {
     background: none;
     border: none;
-    color: white;
-    font-size: 24px;
+    font-size: 20px;
     cursor: pointer;
     padding: 0;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    line-height: 1;
+    opacity: 0.8;
 }
 
 .rpgmaps-tooltip .tooltip-close:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
+    opacity: 1;
 }
 
 .rpgmaps-tooltip .tooltip-body {
-    padding: 15px;
+    padding: 12px 15px;
 }
 
 .rpgmaps-tooltip .occupants-list {
@@ -205,62 +216,78 @@
 }
 
 .rpgmaps-modal .modal-content {
-    background: var(--h4w-trow1-bg);
-    border-radius: 6px;
-    padding: 20px;
+    border-radius: 4px;
+    padding: 0;
     max-width: 500px;
     width: 90%;
     max-height: 80vh;
     overflow-y: auto;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    position: relative;
+    overflow: hidden;
+}
+
+.rpgmaps-modal-header {
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rpgmaps-modal-body {
+    padding: 12px 15px;
 }
 
 .rpgmaps-modal .close {
-    position: absolute;
-    top: 10px;
-    right: 25px;
-    font-size: 28px;
-    font-weight: bold;
     cursor: pointer;
     background: none;
     border: none;
     padding: 0;
+    font-size: 20px;
+    line-height: 1;
+    opacity: 0.8;
 }
 
 .rpgmaps-modal .close:hover {
-    color: #333;
+    opacity: 1;
 }
 
 .rpgmaps-modal h2 {
 }
 
-.rpgmaps-modal .form-group {
-    margin-bottom: 15px;
+.rpgmaps-modal .form-group,
+.rpgmaps-section-body .form-group {
+    margin-bottom: 12px;
 }
 
-.rpgmaps-modal label {
+.rpgmaps-modal label,
+.rpgmaps-section-body label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     font-weight: bold;
-    color: #333;
+    font-size: 12px;
 }
 
 .rpgmaps-modal input,
 .rpgmaps-modal select,
-.rpgmaps-modal textarea {
+.rpgmaps-modal textarea,
+.rpgmaps-section-body input,
+.rpgmaps-section-body select,
+.rpgmaps-section-body textarea {
     width: 100%;
-    padding: 8px;
+    padding: 6px 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-family: inherit;
-    font-size: 14px;
+    font-size: 13px;
     box-sizing: border-box;
 }
 
 .rpgmaps-modal input:focus,
 .rpgmaps-modal select:focus,
-.rpgmaps-modal textarea:focus {
+.rpgmaps-modal textarea:focus,
+.rpgmaps-section-body input:focus,
+.rpgmaps-section-body select:focus,
+.rpgmaps-section-body textarea:focus {
     outline: none;
     border-color: #3498db;
     box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
@@ -339,6 +366,125 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* ========================================
+   House Info Tooltip – strukturierter Aufbau
+   ======================================== */
+
+/* Wrapper */
+.rpgmaps-house-info {
+    font-size: 13px;
+}
+
+/* Header: Haus-Bild + Titel */
+.rpgmaps-house-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+}
+
+.rpgmaps-house-thumb {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    flex-shrink: 0;
+    border-radius: 3px;
+}
+
+.rpgmaps-house-title-block {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.rpgmaps-house-title {
+    font-size: 14px;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rpgmaps-house-subtitle {
+    font-size: 11px;
+    opacity: 0.7;
+    margin-top: 2px;
+}
+
+/* Info-Tabelle (Grundstück, Belegung …) */
+.rpgmaps-info-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.rpgmaps-info-table td {
+    padding: 5px 12px;
+    vertical-align: middle;
+}
+
+.rpgmaps-info-label {
+    font-weight: bold;
+    white-space: nowrap;
+    width: 42%;
+}
+
+.rpgmaps-info-value {
+    width: 58%;
+}
+
+/* Section-Header (tcat) */
+.rpgmaps-section-head {
+    padding: 5px 12px;
+    font-weight: bold;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rpgmaps-occupant-count {
+    font-weight: normal;
+    font-size: 11px;
+    opacity: 0.85;
+}
+
+/* Section-Body (trow1) */
+.rpgmaps-section-body {
+    padding: 10px 12px;
+}
+
+/* Bewohnerliste */
+.rpgmaps-occupant-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rpgmaps-occupant-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+/* Aktions-Buttons */
+.rpgmaps-tooltip-actions {
+    padding: 8px 12px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.rpgmaps-tooltip-actions .button {
+    flex: 1;
+    text-align: center;
+    min-width: 80px;
+}
+
+/* Hooks für Theme-Anpassungen */
+.rpgmaps-btn-movein  {}
+.rpgmaps-btn-moveout {}
 
 /* ========================================
    Description Section Styles

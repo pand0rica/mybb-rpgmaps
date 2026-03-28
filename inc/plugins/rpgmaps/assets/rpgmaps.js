@@ -25,18 +25,16 @@
          * Initialize the plugin
          */
         init: function() {
-            console.log('RPGMaps: Initializing...');
             
             // Get configuration from page
             const container = document.querySelector('[data-csrf-token]');
-            console.log('RPGMaps: Container element:', container);
             
             this.config.csrf_token = container?.getAttribute('data-csrf-token') || '';
             this.config.map_id = container?.getAttribute('data-map-id') || 0;
-            this.config.ajax_url = container?.getAttribute('data-ajax-url') || 'rpgmaps.php';
+            this.config.ajax_url   = container?.getAttribute('data-ajax-url')   || 'rpgmaps.php';
+            this.config.assets_url = container?.getAttribute('data-assets-url') || '';
             
             const loginValue = container?.getAttribute('data-logged-in');
-            console.log('RPGMaps: Login attribute value:', loginValue, 'Type:', typeof loginValue);
             
             this.config.is_logged_in = (loginValue === '1' || loginValue === 1 || loginValue === true);
             
@@ -51,7 +49,6 @@
                 }
             }
             
-            console.log('RPGMaps Config:', this.config);
 
             // Setup event listeners
             this.setupEventListeners();
@@ -65,13 +62,10 @@
                 if (mapImage) {
                     if (mapImage.complete) {
                         // Image is already loaded (cached)
-                        console.log('RPGMaps: Map image already loaded, scaling plots');
                         this.scalePlots();
                     } else {
                         // Wait for image to load
-                        console.log('RPGMaps: Waiting for map image to load');
                         mapImage.addEventListener('load', () => {
-                            console.log('RPGMaps: Map image loaded, scaling plots');
                             this.scalePlots();
                         });
                     }
@@ -81,14 +75,12 @@
                 window.addEventListener('resize', () => this.scalePlots());
             }
             
-            console.log('RPGMaps: Initialized successfully');
         },
 
         /**
          * Scale plots to match the displayed map size (responsive)
          */
         scalePlots: function() {
-            console.log('RPGMaps: Starting scalePlots...');
             
             const container = document.querySelector('[data-csrf-token]');
             if (!container) {
@@ -99,7 +91,6 @@
             const origWidth = parseInt(container.getAttribute('data-orig-width')) || 0;
             const origHeight = parseInt(container.getAttribute('data-orig-height')) || 0;
             
-            console.log('RPGMaps: Original dimensions:', {origWidth, origHeight});
             
             if (origWidth <= 0 || origHeight <= 0) {
                 console.warn('RPGMaps: Invalid original dimensions');
@@ -116,7 +107,6 @@
             const displayedWidth = mapImage.clientWidth;
             const displayedHeight = mapImage.clientHeight;
             
-            console.log('RPGMaps: Displayed dimensions:', {displayedWidth, displayedHeight});
             
             if (displayedWidth <= 0 || displayedHeight <= 0) {
                 console.warn('RPGMaps: Map image has no dimensions yet');
@@ -127,11 +117,9 @@
             const scaleX = displayedWidth / origWidth;
             const scaleY = displayedHeight / origHeight;
             
-            console.log('RPGMaps Scaling factors:', {scaleX, scaleY});
             
             // Scale all plots
             const plots = document.querySelectorAll('.rpgmaps-plot');
-            console.log('RPGMaps: Found', plots.length, 'plots to scale');
             
             plots.forEach((plot, index) => {
                 const origX = parseInt(plot.getAttribute('data-orig-x')) || 0;
@@ -146,7 +134,6 @@
                 const scaledW = origW * scaleX;
                 const scaledH = origH * scaleY;
                 
-                console.log(`RPGMaps: Plot ${index}`, {origX, origY, origW, origH, scaledX, scaledY, scaledW, scaledH, rotation});
                 
                 // Apply scaled values
                 let newStyle = `left: ${scaledX}px; top: ${scaledY}px; width: ${scaledW}px; height: ${scaledH}px; transform-origin: center center;`;
@@ -162,16 +149,13 @@
          * Setup event listeners for plot clicks
          */
         setupEventListeners: function() {
-            console.log('RPGMaps: Setting up event listeners');
             
             // Delegate click events on plot elements
             document.addEventListener('click', (e) => {
                 const plot = e.target.closest('.rpgmaps-plot');
                 if (plot) {
-                    console.log('RPGMaps: Plot clicked', plot);
                     const plotId = plot.getAttribute('data-plotid');
                     const houseId = plot.getAttribute('data-houseid');
-                    console.log('RPGMaps: Plot ID:', plotId, 'House ID:', houseId);
                     this.showPlotInfo(plotId, houseId);
                     return; // Stop processing other click handlers
                 }
@@ -202,9 +186,7 @@
 
             // Form submissions
             document.addEventListener('submit', (e) => {
-                console.log('RPGMaps: Form submit event detected, form ID:', e.target.id);
                 if (e.target.id === 'form-build-house') {
-                    console.log('RPGMaps: Build house form detected, preventing default');
                     e.preventDefault();
                     this.submitBuildRequest(e.target);
                 } else if (e.target.id === 'form-move-in') {
@@ -239,12 +221,16 @@
          * Show plot information (tooltip or modal)
          */
         showPlotInfo: function(plotId, houseId) {
-            console.log('RPGMaps: showPlotInfo called - Plot:', plotId, 'House:', houseId);
-            
+
             if (!houseId) {
-                // Free plot - show build modal
-                console.log('RPGMaps: Free plot, is logged in?', this.config.is_logged_in);
-                if (this.config.is_logged_in) {
+                const plotEl = document.querySelector('[data-plotid="' + plotId + '"]');
+                const isPending = plotEl && plotEl.getAttribute('data-pending') === '1';
+
+                if (isPending) {
+                    // Pending plot - show building info tooltip
+                    const msg = this.config.lang.plot_building || 'A new house is being built here.';
+                    this.showTooltip(plotId, '<p>' + this.escapeHtml(msg) + '</p>');
+                } else if (this.config.is_logged_in) {
                     this.showBuildModal(plotId);
                 } else {
                     alert('Du musst eingeloggt sein, um hier zu bauen.');
@@ -259,7 +245,6 @@
          * Load house information via AJAX
          */
         loadHouseInfo: function(houseId, plotId) {
-            console.log('RPGMaps: loadHouseInfo called - House ID:', houseId, 'Plot ID:', plotId);
             const data = {
                 sub: 'rpgmaps_get_house_info',
                 house_id: houseId,
@@ -267,9 +252,7 @@
             };
 
             this.ajax(data, (response) => {
-                console.log('RPGMaps: House info response:', response);
                 if (response.success) {
-                    console.log('RPGMaps: Calling displayHouseTooltip');
                     this.displayHouseTooltip(response.house, response.house_type, response.house_types || [], response.occupants, response.plot, plotId);
                 } else {
                     const errorMessage = response.message || response.error || 'Error loading house info.';
@@ -283,107 +266,132 @@
          * Display house information in tooltip
          */
         displayHouseTooltip: function(house, houseType, houseTypes, occupants, plot, plotId) {
-            console.log('RPGMaps: displayHouseTooltip called - Plot ID:', plotId);
-            console.log('RPGMaps: House:', house, 'HouseType:', houseType, 'Occupants:', occupants);
-            let html = '<div class="house-details">';
-            html += '<h4>' + this.escapeHtml(houseType.name) + '</h4>';
-            html += '<p><strong>' + this.config.lang.status + ':</strong> ' + this.escapeHtml(house.status) + '</p>';
-            html += '<p><strong>' + this.config.lang.type + ':</strong> <span id="house-type-name-' + house.id + '">' + this.escapeHtml(houseType.name) + '</span></p>';
-            const houseNameLabel = this.config.lang.house_name || 'House name';
+            const currentUserId = this.config.is_logged_in
+                ? parseInt(document.querySelector('[data-csrf-token]').getAttribute('data-user-id') || '0')
+                : 0;
+            const isOccupant    = occupants.some(occ => occ.uid == currentUserId);
             const currentHouseName = (house.house_name || '').trim();
-            html += '<p><strong>' + this.escapeHtml(houseNameLabel) + ':</strong> <span id="house-name-name-' + house.id + '">' + (currentHouseName ? this.escapeHtml(currentHouseName) : '-') + '</span></p>';
-            const plotLabelRaw = plot && typeof plot.tooltip_text === 'string' && plot.tooltip_text.trim() !== ''
+            const displayTitle  = currentHouseName || this.escapeHtml(houseType.name);
+            const plotLabelRaw  = plot && typeof plot.tooltip_text === 'string' && plot.tooltip_text.trim() !== ''
                 ? plot.tooltip_text
                 : (plot && plot.plot_key ? plot.plot_key : '');
-            if (plotLabelRaw) {
-                html += '<p><strong>' + (this.config.lang.plot_name || 'Plot') + ':</strong> ' + this.escapeHtml(plotLabelRaw) + '</p>';
+
+            let html = '<div class="rpgmaps-house-info">';
+
+            // === Header: thumbnail + title/type ===
+            html += '<div class="rpgmaps-house-header trow1">';
+            if (houseType.asset_filename && this.config.assets_url) {
+                html += '<img src="' + this.config.assets_url + 'houses/' + this.escapeHtml(houseType.asset_filename) + '"'
+                    + ' class="rpgmaps-house-thumb" alt="">';
             }
-            html += '<p><strong>' + this.config.lang.maximum_occupants + ':</strong> ' + occupants.length + ' / <span id="house-max-occupants-' + house.id + '">' + house.max_occupants + '</span></p>';
-            
-            // Description section
-            html += '<div class="house-description-section">';
-            html += '<strong>' + this.config.lang.description + ':</strong>';
+            html += '<div class="rpgmaps-house-title-block">';
+            html += '<strong class="rpgmaps-house-title">' + this.escapeHtml(displayTitle) + '</strong>';
+            if (currentHouseName) {
+                html += '<span class="rpgmaps-house-subtitle">' + this.escapeHtml(houseType.name) + '</span>';
+            }
+            html += '</div></div>';
+
+            // === Info table: plot + capacity ===
+            html += '<table class="rpgmaps-info-table">';
+            if (plotLabelRaw) {
+                html += '<tr class="trow1">'
+                    + '<td class="rpgmaps-info-label">' + (this.config.lang.plot_name || 'Plot') + '</td>'
+                    + '<td class="rpgmaps-info-value">' + this.escapeHtml(plotLabelRaw) + '</td>'
+                    + '</tr>';
+            }
+            html += '<tr class="trow2">'
+                + '<td class="rpgmaps-info-label">' + this.config.lang.maximum_occupants + '</td>'
+                + '<td class="rpgmaps-info-value">'
+                + occupants.length + '&thinsp;/&thinsp;<span id="house-max-occupants-' + house.id + '">' + house.max_occupants + '</span>'
+                + '</td></tr>';
+            html += '</table>';
+
+            // === Description ===
+            html += '<div class="tcat rpgmaps-section-head">' + this.config.lang.description + '</div>';
+            html += '<div class="trow1 rpgmaps-section-body">';
             html += '<div id="description-display-' + house.id + '">';
-            if (house.description_html) {
-                // Use parsed HTML from server (BBCode already processed)
-                html += house.description_html;
-            } else {
-                html += '<em>' + this.config.lang.no_description + '</em>';
+            html += house.description_html
+                ? house.description_html
+                : '<em>' + this.config.lang.no_description + '</em>';
+            html += '</div>';
+            if (isOccupant) {
+                html += '<textarea id="description-edit-' + house.id + '" class="description-edit-textarea">'
+                    + (house.description_raw ? this.escapeHtml(house.description_raw) : '') + '</textarea>';
+                html += '<div class="description-edit-controls">';
+                html += '<button class="btn-small" onclick="RPGMaps.toggleDescriptionEdit(' + house.id + ')" id="edit-btn-' + house.id + '">'
+                    + this.config.lang.edit + '</button>';
+                html += '<button class="btn-small hidden" onclick="RPGMaps.saveDescription(' + house.id + ')" id="save-btn-' + house.id + '">'
+                    + this.config.lang.save + '</button>';
+                html += '<button class="btn-small btn-cancel hidden" onclick="RPGMaps.cancelDescriptionEdit(' + house.id + ')" id="cancel-btn-' + house.id + '">'
+                    + this.config.lang.cancel + '</button>';
+                html += '</div>';
             }
             html += '</div>';
-            
-            // Check if user is an occupant
-            const currentUserId = this.config.is_logged_in ? parseInt(document.querySelector('[data-csrf-token]').getAttribute('data-user-id') || '0') : 0;
-            const isOccupant = occupants.some(occ => occ.uid == currentUserId);
-            
+
+            // === Occupants ===
+            html += '<div class="tcat rpgmaps-section-head">'
+                + this.config.lang.occupants
+                + ' <span class="rpgmaps-occupant-count">' + occupants.length + '&thinsp;/&thinsp;' + house.max_occupants + '</span>'
+                + '</div>';
+            html += '<div class="trow1 rpgmaps-section-body rpgmaps-occupant-list">';
+            if (occupants.length > 0) {
+                occupants.forEach((occ) => {
+                    let roleLabel = occ.role === 'owner'
+                        ? (this.config.lang.role_owner || 'Owner')
+                        : occ.role === 'resident'
+                            ? (this.config.lang.role_resident || 'Resident')
+                            : this.escapeHtml(occ.role.toUpperCase());
+                    html += '<div class="rpgmaps-occupant-item">';
+                    html += '<span class="occupant-role">' + roleLabel + '</span>';
+                    html += occ.username
+                        ? '<a href="member.php?action=profile&uid=' + occ.uid + '">' + this.escapeHtml(occ.username) + '</a>'
+                        : 'User ' + occ.uid;
+                    html += '</div>';
+                });
+            } else {
+                html += '<em>' + (this.config.lang.no_occupants || '–') + '</em>';
+            }
+            html += '</div>';
+
+            // === Settings (occupants only) ===
             if (isOccupant) {
-                html += '<div class="house-description-section">';
-                html += '<strong>Haus-Einstellungen:</strong>';
-                html += '<div class="form-group">';
-                html += '<label>' + this.config.lang.type + ':</label>';
-                html += '<select id="house-type-edit-' + house.id + '">';
+                html += '<div class="tcat rpgmaps-section-head">'
+                    + (this.config.lang.house_settings || 'Einstellungen') + '</div>';
+                html += '<div class="trow1 rpgmaps-section-body">';
+                html += '<div class="form-group">'
+                    + '<label>' + this.config.lang.type + '</label>'
+                    + '<select id="house-type-edit-' + house.id + '">';
                 (houseTypes || []).forEach((type) => {
                     const selected = parseInt(type.id, 10) === parseInt(house.type_id, 10) ? ' selected' : '';
                     html += '<option value="' + parseInt(type.id, 10) + '"' + selected + '>' + this.escapeHtml(type.name) + '</option>';
                 });
-                html += '</select>';
-                html += '</div>';
-                html += '<div class="form-group">';
-                html += '<label>' + this.config.lang.maximum_occupants + ':</label>';
-                html += '<input type="number" id="max-occupants-edit-' + house.id + '" min="1" max="20" value="' + parseInt(house.max_occupants, 10) + '">';
-                html += '</div>';
-                html += '<div class="form-group">';
-                html += '<label>' + this.escapeHtml(this.config.lang.house_name_optional || this.config.lang.house_name || 'House name (optional)') + ':</label>';
-                html += '<input type="text" id="house-name-edit-' + house.id + '" maxlength="255" value="' + (currentHouseName ? this.escapeHtml(currentHouseName) : '') + '">';
-                html += '</div>';
-                html += '<button class="btn btn-small" onclick="RPGMaps.saveHouseSettings(' + house.id + ')">' + this.config.lang.save + '</button>';
-                html += '</div>';
-
-                // Use raw description (BBCode) for editing in textarea
-                html += '<textarea id="description-edit-' + house.id + '" class="description-edit-textarea">' + (house.description_raw ? this.escapeHtml(house.description_raw) : '') + '</textarea>';
-                html += '<div class="description-edit-controls">';
-                html += '<button class="btn btn-small" onclick="RPGMaps.toggleDescriptionEdit(' + house.id + ')" id="edit-btn-' + house.id + '">' + this.config.lang.edit + '</button>';
-                html += '<button class="btn btn-small hidden" onclick="RPGMaps.saveDescription(' + house.id + ')" id="save-btn-' + house.id + '">' + this.config.lang.save + '</button>';
-                html += '<button class="btn btn-small btn-cancel hidden" onclick="RPGMaps.cancelDescriptionEdit(' + house.id + ')" id="cancel-btn-' + house.id + '">' + this.config.lang.cancel + '</button>';
-                html += '</div>';
-            }
-            html += '</div>';
-
-            if (occupants.length > 0) {
-                html += '<div class="occupants-list">';
-                html += '<strong>' + this.config.lang.occupants + ':</strong>';
-                occupants.forEach((occ) => {
-                    html += '<div class="occupant-item">';
-                    // Translate role based on language settings
-                    let roleLabel = '';
-                    if (occ.role === 'owner') {
-                        roleLabel = this.config.lang.role_owner || 'Ansprechperson';
-                    } else if (occ.role === 'resident') {
-                        roleLabel = this.config.lang.role_resident || 'Bewohner*in';
-                    } else {
-                        roleLabel = this.escapeHtml(occ.role.toUpperCase());
-                    }
-                    html += '<span class="occupant-role">' + roleLabel + '</span>';
-                    if (occ.username) {
-                        html += '<a href="member.php?action=profile&uid=' + occ.uid + '">' + this.escapeHtml(occ.username) + '</a>';
-                    } else {
-                        html += 'User ' + occ.uid;
-                    }
-                    html += '</div>';
-                });
+                html += '</select></div>';
+                html += '<div class="form-group">'
+                    + '<label>' + this.config.lang.maximum_occupants + '</label>'
+                    + '<input type="number" id="max-occupants-edit-' + house.id + '" min="1" max="20" value="' + parseInt(house.max_occupants, 10) + '">'
+                    + '</div>';
+                html += '<div class="form-group">'
+                    + '<label>' + this.escapeHtml(this.config.lang.house_name_optional || '') + '</label>'
+                    + '<input type="text" id="house-name-edit-' + house.id + '" maxlength="255" value="' + (currentHouseName ? this.escapeHtml(currentHouseName) : '') + '">'
+                    + '</div>';
+                html += '<button class="btn-small" onclick="RPGMaps.saveHouseSettings(' + house.id + ')">'
+                    + this.config.lang.save + '</button>';
                 html += '</div>';
             }
 
-            // Add action buttons if logged in
+            // === Action buttons ===
             if (this.config.is_logged_in) {
+                html += '<div class="rpgmaps-tooltip-actions trow2">';
                 if (occupants.length < house.max_occupants) {
-                    html += '<button class="btn btn-primary" onclick="RPGMaps.showMoveInModal(' + house.id + ')">' + this.config.lang.move_in + '</button>';
+                    html += '<button class="button rpgmaps-btn-movein" onclick="RPGMaps.showMoveInModal(' + house.id + ')">'
+                        + this.config.lang.move_in + '</button>';
                 }
-                html += '<button class="btn btn-secondary" onclick="RPGMaps.showMoveOutModal(' + house.id + ')">' + this.config.lang.move_out + '</button>';
+                html += '<button class="button rpgmaps-btn-moveout" onclick="RPGMaps.showMoveOutModal(' + house.id + ')">'
+                    + this.config.lang.move_out + '</button>';
+                html += '</div>';
             }
 
             html += '</div>';
-
             this.showTooltip(plotId, html);
         },
 
@@ -471,20 +479,12 @@
          * Show build house modal
          */
         showBuildModal: function(plotId) {
-            console.log('RPGMaps: showBuildModal called for plot', plotId);
             const modal = document.getElementById('rpgmaps-modal-build');
             const plotIdInput = document.getElementById('build-plot-id');
-            console.log('RPGMaps: Modal element:', modal);
-            console.log('RPGMaps: Plot ID input element:', plotIdInput);
             if (modal && plotIdInput) {
                 plotIdInput.value = plotId;
-                console.log('RPGMaps: Set plot ID to:', plotId, 'Value in input:', plotIdInput.value);
-                console.log('RPGMaps: Modal classes before:', modal.className);
                 modal.classList.remove('hidden-modal');
                 modal.classList.add('visible');
-                console.log('RPGMaps: Modal classes after:', modal.className);
-                console.log('RPGMaps: Modal display style:', window.getComputedStyle(modal).display);
-                console.log('RPGMaps: Modal shown');
             } else {
                 console.error('RPGMaps: Modal or input field not found!');
                 if (!modal) {
@@ -508,15 +508,19 @@
             const modal = document.createElement('div');
             modal.className = 'rpgmaps-modal visible';
             modal.innerHTML = `
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h2>${this.config.lang.move_in}</h2>
-                    <p>${this.config.lang.confirm_move_in}</p>
-                    <form id="form-move-in">
-                        <input type="hidden" name="house_id" value="${houseId}">
-                        <button type="submit" class="btn btn-primary">${this.config.lang.yes}</button>
-                        <button type="button" class="btn btn-secondary" onclick="RPGMaps.hideModal()">${this.config.lang.cancel}</button>
-                    </form>
+                <div class="modal-content tborder trow1">
+                    <div class="rpgmaps-modal-header thead">
+                        <strong>${this.config.lang.move_in}</strong>
+                        <span class="close" onclick="RPGMaps.hideModal()">&times;</span>
+                    </div>
+                    <div class="rpgmaps-modal-body">
+                        <p>${this.config.lang.confirm_move_in}</p>
+                        <form id="form-move-in">
+                            <input type="hidden" name="house_id" value="${houseId}">
+                            <button type="submit" class="btn btn-primary">${this.config.lang.yes}</button>
+                            <button type="button" class="btn btn-secondary" onclick="RPGMaps.hideModal()">${this.config.lang.cancel}</button>
+                        </form>
+                    </div>
                 </div>
             `;
             document.body.appendChild(modal);
@@ -533,15 +537,19 @@
             const modal = document.createElement('div');
             modal.className = 'rpgmaps-modal visible';
             modal.innerHTML = `
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h2>${this.config.lang.move_out}</h2>
-                    <p>${this.config.lang.confirm_move_out}</p>
-                    <form id="form-move-out">
-                        <input type="hidden" name="house_id" value="${houseId}">
-                        <button type="submit" class="btn btn-primary">${this.config.lang.yes}</button>
-                        <button type="button" class="btn btn-secondary" onclick="RPGMaps.hideModal()">${this.config.lang.cancel}</button>
-                    </form>
+                <div class="modal-content tborder trow1">
+                    <div class="rpgmaps-modal-header thead">
+                        <strong>${this.config.lang.move_out}</strong>
+                        <span class="close" onclick="RPGMaps.hideModal()">&times;</span>
+                    </div>
+                    <div class="rpgmaps-modal-body">
+                        <p>${this.config.lang.confirm_move_out}</p>
+                        <form id="form-move-out">
+                            <input type="hidden" name="house_id" value="${houseId}">
+                            <button type="submit" class="btn btn-primary">${this.config.lang.yes}</button>
+                            <button type="button" class="btn btn-secondary" onclick="RPGMaps.hideModal()">${this.config.lang.cancel}</button>
+                        </form>
+                    </div>
                 </div>
             `;
             document.body.appendChild(modal);
@@ -551,18 +559,14 @@
          * Show tooltip
          */
         showTooltip: function(plotId, content) {
-            console.log('RPGMaps: showTooltip called for plot', plotId);
             let tooltip = document.getElementById('rpgmaps-tooltip-' + plotId);
-            console.log('RPGMaps: Tooltip element:', tooltip);
-            
+
             if (!tooltip) {
-                // Create tooltip if it doesn't exist
-                console.log('RPGMaps: Creating new tooltip element');
                 tooltip = document.createElement('div');
                 tooltip.id = 'rpgmaps-tooltip-' + plotId;
-                tooltip.className = 'rpgmaps-tooltip';
+                tooltip.className = 'rpgmaps-tooltip tborder trow1';
                 tooltip.innerHTML = `
-                    <div class="tooltip-header">
+                    <div class="tooltip-header thead">
                         <h3>${this.config.lang.house_information || 'House Information'}</h3>
                         <a href="javascript:void(0);" class="tooltip-close">&times;</a>
                     </div>
@@ -570,11 +574,20 @@
                 `;
                 document.body.appendChild(tooltip);
             }
-            
+
             tooltip.querySelector('.tooltip-body').innerHTML = content;
+
+            // Measure dimensions while invisible to get reliable values
+            tooltip.style.visibility = 'hidden';
+            tooltip.style.display = 'block';
+            const tw = tooltip.offsetWidth || 400;
+            const th = tooltip.offsetHeight || 200;
+            tooltip.style.display = '';
+            tooltip.style.visibility = '';
+
             tooltip.classList.add('visible');
 
-            // Position tooltip near the plot, keeping it inside the viewport
+            // Position tooltip near the plot, keeping it fully inside the viewport
             const plot = document.querySelector('[data-plotid="' + plotId + '"]');
             if (plot) {
                 const rect = plot.getBoundingClientRect();
@@ -582,32 +595,24 @@
                 let left = rect.right + 10;
                 let top = rect.top;
 
-                tooltip.style.left = left + 'px';
-                tooltip.style.top = top + 'px';
-
-                const tooltipRect = tooltip.getBoundingClientRect();
-                const maxLeft = window.innerWidth - tooltipRect.width - padding;
-                const maxTop = window.innerHeight - tooltipRect.height - padding;
+                const maxLeft = window.innerWidth - tw - padding;
+                const maxTop = window.innerHeight - th - padding;
 
                 if (left > maxLeft) {
-                    left = rect.left - tooltipRect.width - 10;
+                    left = rect.left - tw - 10;
                 }
-
                 if (left < padding) {
                     left = padding;
                 }
-
                 if (top > maxTop) {
                     top = Math.max(padding, maxTop);
                 }
-
                 if (top < padding) {
                     top = padding;
                 }
 
                 tooltip.style.left = left + 'px';
                 tooltip.style.top = top + 'px';
-                console.log('RPGMaps: Tooltip positioned at', tooltip.style.left, tooltip.style.top);
             } else {
                 console.error('RPGMaps: Plot element not found for positioning');
             }
@@ -647,7 +652,6 @@
          * Submit build request
          */
         submitBuildRequest: function(form) {
-            console.log('RPGMaps: submitBuildRequest called');
             
             // Get form elements with error checking
             const plotIdInput = document.getElementById('build-plot-id');
@@ -656,11 +660,6 @@
             const descriptionInput = document.getElementById('house-description-input');
             const houseNameInput = document.getElementById('house-name-input');
             
-            console.log('RPGMaps: plotIdInput:', plotIdInput);
-            console.log('RPGMaps: typeIdSelect:', typeIdSelect);
-            console.log('RPGMaps: maxOccupantsInput:', maxOccupantsInput);
-            console.log('RPGMaps: descriptionInput:', descriptionInput);
-            console.log('RPGMaps: houseNameInput:', houseNameInput);
             
             // Check if all required elements exist
             if (!plotIdInput || !typeIdSelect || !maxOccupantsInput) {
@@ -677,7 +676,6 @@
             const maxOccupants = maxOccupantsInput.value;
             const description = descriptionInput ? descriptionInput.value.trim() : '';
             const houseName = houseNameInput ? houseNameInput.value.trim() : '';
-            console.log('RPGMaps: Plot ID:', plotId, 'Type ID:', typeId, 'Max Occupants:', maxOccupants, 'Description:', description, 'House Name:', houseName);
 
             if (!typeId) {
                 alert('Please select a house type');
@@ -700,20 +698,34 @@
             };
 
             this.ajax(data, (response) => {
-                console.log('RPGMaps: Build request response:', response);
                 if (response.success) {
-                    this.showMessage('success', 'Build request submitted. Awaiting admin approval.');
-                    this.hideModal();
-                    
-                    // Remove the plot from the map immediately
-                    console.log('RPGMaps: Removing plot with ID:', plotId);
+                    // Change plot to pending state (yellow) instead of removing it
                     const plot = document.querySelector('[data-plotid="' + plotId + '"]');
-                    console.log('RPGMaps: Found plot element:', plot);
                     if (plot) {
-                        plot.remove();
-                        console.log('RPGMaps: Plot removed successfully');
+                        plot.classList.remove('rpgmaps-plot-free');
+                        plot.classList.add('rpgmaps-plot-pending');
+                        plot.setAttribute('data-pending', '1');
+                        const plotInfo = plot.querySelector('.rpgmaps-plot-info');
+                        if (plotInfo) {
+                            plotInfo.textContent = this.config.lang.plot_building || 'A new house is being built here.';
+                        }
+                    }
+
+                    // Replace modal content with confirmation instead of closing
+                    const modal = document.getElementById('rpgmaps-modal-build');
+                    const modalBody = modal ? modal.querySelector('.rpgmaps-modal-body') : null;
+                    if (modalBody) {
+                        modalBody.innerHTML =
+                            '<div class="rpgmaps-message success">' +
+                                '<strong>' + this.escapeHtml(this.config.lang.build_success || 'Build request submitted!') + '</strong>' +
+                                '<br>' +
+                                this.escapeHtml(this.config.lang.build_pending_info || 'Your build request is awaiting approval from a team member.') +
+                            '</div>' +
+                            '<button type="button" class="button" onclick="RPGMaps.hideModal()">' +
+                                this.escapeHtml(this.config.lang.close || 'Close') +
+                            '</button>';
                     } else {
-                        console.error('RPGMaps: Plot element not found!');
+                        this.hideModal();
                     }
                 } else {
                     const errorMessage = response.message || response.error || 'Error submitting request';

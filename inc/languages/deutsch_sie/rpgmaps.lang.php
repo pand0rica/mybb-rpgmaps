@@ -14,6 +14,8 @@ if (!defined('IN_MYBB')) {
 $l['rpgmaps_name'] = 'RPG Maps';
 $l['rpgmaps_description'] = 'Verwalten Sie Fantasy-Stadt-Karten und Bauplätze';
 $l['rpgmaps_maps'] = 'RPG Maps';
+$l['rpgmaps_nav_maps'] = 'Karten';
+$l['rpgmaps_view_map'] = 'Karte ansehen';
 $l['rpgmaps_plugin_disabled'] = 'Das RPG Maps Plugin ist derzeit deaktiviert.';
 $l['rpgmaps_map_not_found'] = 'Die angeforderte Karte wurde nicht gefunden.';
 
@@ -24,6 +26,7 @@ $l['rpgmaps_select_map'] = 'Wählen Sie eine Karte:';
 $l['rpgmaps_map_description'] = 'Beschreibung:';
 
 $l['rpgmaps_plot_free'] = 'Freier Bauplatz';
+$l['rpgmaps_plot_building'] = 'Hier entsteht gerade ein neues Haus.';
 $l['rpgmaps_plot_pending'] = 'Bauantrag ausstehend';
 $l['rpgmaps_plot_built'] = 'Bebauter Platz';
 
@@ -83,7 +86,9 @@ $l['rpgmaps_house_full'] = 'Dieses Haus ist voll besetzt';
 $l['rpgmaps_already_resident'] = 'Sie sind bereits Bewohner dieses Hauses';
 $l['rpgmaps_not_resident'] = 'Sie sind kein Bewohner dieses Hauses';
 
-$l['rpgmaps_build_success'] = 'Bauantrag erfolgreich gestellt';
+$l['rpgmaps_build_success'] = 'Bauantrag eingereicht!';
+$l['rpgmaps_build_pending_info'] = 'Ihr Bauantrag wurde eingereicht und muss von einem Teammitglied genehmigt werden.';
+$l['rpgmaps_close'] = 'Schließen';
 $l['rpgmaps_move_in_success'] = 'Einzugsantrag erfolgreich gestellt';
 $l['rpgmaps_move_out_success'] = 'Auszugsantrag erfolgreich gestellt';
 
@@ -130,3 +135,8 @@ $l['rpgmaps_admin_action_type'] = 'Antragstyp';
 $l['rpgmaps_admin_action_user'] = 'Benutzer';
 $l['rpgmaps_admin_action_date'] = 'Datum';
 $l['rpgmaps_admin_action_status'] = 'Status';
+
+// MyAlerts Benachrichtigungen
+$l['rpgmaps_house_settings'] = 'Haus-Einstellungen';
+
+$l['rpgmaps_alert_build_approved'] = 'Ihr Bauantrag für Bauplatz {1} auf Karte {2} wurde genehmigt!';
