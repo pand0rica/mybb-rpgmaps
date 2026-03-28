@@ -18,3 +18,4 @@ CONFIGURATION.md
 INSTALLATION.md
 QUICK_REFERENCE.md
 SAMPLE_DATA.sql
+.claude/settings.local.json
