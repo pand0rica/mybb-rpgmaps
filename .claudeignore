@@ -1,0 +1,15 @@
+# Sensible Dateien
+.vscode/sftp.json
+inc/config.php
+*.sql
+*.backup
+*.bak
+
+# Uploads und Medien
+uploads/
+docs/screenshots/*.png
+docs/screenshots/*.jpg
+
+# Interne Entwicklungsdoks
+DELIVERY_SUMMARY.md
+TESTING.md
