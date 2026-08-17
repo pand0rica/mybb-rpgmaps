@@ -272,6 +272,15 @@ function rpgmaps_install_templates()
 </body>
 </html>'),
 
+        'rpgmaps_map_row' => $db->escape_string('<tr>
+<td class="trow1">
+<strong><a href="{$rpgmaps_map_url}">{$rpgmaps_map_title}</a></strong>
+<div class="smalltext">{$rpgmaps_map_description}</div>
+<a href="{$rpgmaps_map_url}" class="button">{$lang->rpgmaps_view_map}</a>
+<br /><br />
+</td>
+</tr>'),
+
         'rpgmaps_tooltip' => $db->escape_string('<div class="rpgmaps-tooltip" id="rpgmaps-tooltip-{$rpgmaps_tooltip_id}">
     <div class="tooltip-header">
         <h3>{$rpgmaps_plot_name}</h3>
@@ -560,6 +569,25 @@ function rpgmaps_update_templates()
         $db->insert_query('templates', array(
             'title' => 'rpgmaps_nav',
             'template' => $db->escape_string('<li {$rpgmaps_nav_active}><a href="{$mybb->settings[\'bburl\']}/rpgmaps.php">{$lang->rpgmaps_nav_maps}</a></li>'),
+            'sid' => -1,
+            'version' => 1833,
+            'dateline' => TIME_NOW,
+        ));
+    }
+
+    // Add rpgmaps_map_row template if it doesn't exist yet (map list row extracted from PHP)
+    $existing = $db->simple_select('templates', 'title', "title = 'rpgmaps_map_row'");
+    if (!$db->fetch_array($existing)) {
+        $db->insert_query('templates', array(
+            'title' => 'rpgmaps_map_row',
+            'template' => $db->escape_string('<tr>
+<td class="trow1">
+<strong><a href="{$rpgmaps_map_url}">{$rpgmaps_map_title}</a></strong>
+<div class="smalltext">{$rpgmaps_map_description}</div>
+<a href="{$rpgmaps_map_url}" class="button">{$lang->rpgmaps_view_map}</a>
+<br /><br />
+</td>
+</tr>'),
             'sid' => -1,
             'version' => 1833,
             'dateline' => TIME_NOW,

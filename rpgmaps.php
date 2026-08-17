@@ -10,7 +10,7 @@
 define('IN_MYBB', 1);
 define('THIS_SCRIPT', 'rpgmaps.php');
 
-$templatelist = 'rpgmaps_frontend,rpgmaps_tooltip,rpgmaps_modal_build,rpgmaps_map_list';
+$templatelist = 'rpgmaps_frontend,rpgmaps_tooltip,rpgmaps_modal_build,rpgmaps_map_list,rpgmaps_map_row';
 
 require_once "./global.php";
 
@@ -67,15 +67,10 @@ if ($map_id <= 0) {
     $map_list_items = '';
     if (!empty($maps)) {
         foreach ($maps as $map) {
-            $map_url = $mybb->settings['bburl'] . '/rpgmaps.php?map_id=' . (int)$map['id'];
-            $map_list_items .= '<tr>
-                <td class="trow1">
-                    <strong><a href="' . $map_url . '">' . htmlspecialchars_uni($map['title']) . '</a></strong>
-                    <div class="smalltext">' . htmlspecialchars_uni($map['description']) . '</div>
-                    <br />
-                    <a href="' . $map_url . '" class="button">' . $lang->rpgmaps_view_map . '</a>
-                </td>
-            </tr>';
+            $rpgmaps_map_url = $mybb->settings['bburl'] . '/rpgmaps.php?map_id=' . (int)$map['id'];
+            $rpgmaps_map_title = htmlspecialchars_uni($map['title']);
+            $rpgmaps_map_description = htmlspecialchars_uni($map['description']);
+            eval('$map_list_items .= "' . $templates->get('rpgmaps_map_row') . '";');
         }
     } else {
         $map_list_items = '<tr><td class="trow1" align="center">' . $lang->rpgmaps_no_maps . '</td></tr>';
