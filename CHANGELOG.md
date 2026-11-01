@@ -2,6 +2,21 @@
 
 All notable changes to RPG Maps will be documented here.
 
+## [Unreleased]
+
+### Security
+- SQL injection via the house name in "house settings" (AJAX `rpgmaps_update_house_settings`): the value is now escaped before `update_query()`
+- ACP: deleting plots and house types and approving/rejecting requests could be triggered by a plain GET link without `my_post_key` (CSRF). All write handlers now go through `rpgmaps_acp_verify_key()`, which checks the return value of `verify_post_check()`
+
+### Fixed
+- ACP: deleting a map crashed with a fatal error (`$page` was not declared global in `rpgmaps_admin_maps_delete()`)
+- Double table prefix (`mybb_mybb_rpgmaps_house_occupants`) in `approveMoveOutRequest()` and `handleUserDeletion()`
+- Uninstall left a stale `rpgmaps.css` in the theme stylesheet lists and cache
+- House tooltip title was HTML-escaped twice when no custom house name was set
+
+### Changed
+- Direct `$mybb->input[...]` access replaced by `$mybb->get_input()` in `rpgmaps.php` and the ACP module
+
 ## [1.1.0] – 2026-03-28
 
 ### Added

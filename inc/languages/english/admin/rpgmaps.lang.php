@@ -124,3 +124,4 @@ $l['rpgmaps_default_currency'] = 'Default Currency';
 $l['rpgmaps_default_currency_desc'] = 'Name of currency for prices';
 $l['rpgmaps_enable_occupancy'] = 'Enable Occupancy System';
 $l['rpgmaps_enable_occupancy_desc'] = 'Allow multiple occupants per house';
+$l['rpgmaps_invalid_key'] = 'Invalid security token. Please try again.';

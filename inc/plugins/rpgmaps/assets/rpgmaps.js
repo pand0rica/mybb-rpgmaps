@@ -271,7 +271,7 @@
                 : 0;
             const isOccupant    = occupants.some(occ => occ.uid == currentUserId);
             const currentHouseName = (house.house_name || '').trim();
-            const displayTitle  = currentHouseName || this.escapeHtml(houseType.name);
+            const displayTitle  = currentHouseName || houseType.name;
             const plotLabelRaw  = plot && typeof plot.tooltip_text === 'string' && plot.tooltip_text.trim() !== ''
                 ? plot.tooltip_text
                 : (plot && plot.plot_key ? plot.plot_key : '');

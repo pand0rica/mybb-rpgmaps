@@ -286,11 +286,12 @@ class RPGMapsManager
             $house_name = substr($house_name, 0, 255);
         }
 
-        // Update house settings
+        // Update house settings (update_query escapet nicht selbst)
+        global $db;
         $this->db->updateHouse($house_id, [
             'type_id' => (int)$house_type_id,
             'max_occupants' => (int)$max_occupants,
-            'house_name' => $house_name,
+            'house_name' => $db->escape_string($house_name),
         ]);
 
         // Log action
@@ -484,7 +485,7 @@ class RPGMapsManager
         
         // Find occupant record
         $query = $GLOBALS['db']->simple_select(
-            TABLE_PREFIX . 'rpgmaps_house_occupants',
+            'rpgmaps_house_occupants',
             'id',
             'house_id = ' . (int)$house_id . " AND uid = " . (int)$user_id . " AND left_at IS NULL",
             ['limit' => 1]
@@ -559,7 +560,7 @@ class RPGMapsManager
     {
         // Get all houses where user is an occupant
         $query = $GLOBALS['db']->simple_select(
-            TABLE_PREFIX . 'rpgmaps_house_occupants',
+            'rpgmaps_house_occupants',
             'house_id',
             'uid = ' . (int)$user_id . " AND left_at IS NULL",
             ['group_by' => 'house_id']
@@ -572,7 +573,7 @@ class RPGMapsManager
         
         // Mark all occupants as left
         $GLOBALS['db']->update_query(
-            TABLE_PREFIX . 'rpgmaps_house_occupants',
+            'rpgmaps_house_occupants',
             ['left_at' => TIME_NOW],
             'uid = ' . (int)$user_id . " AND left_at IS NULL"
         );

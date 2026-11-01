@@ -898,6 +898,18 @@ function rpgmaps_uninstall_css()
 {
     global $db;
 
+    require_once MYBB_ADMIN_DIR . "inc/functions_themes.php";
+
     // Remove stylesheets from all themes
     $db->delete_query('themestylesheets', "name = 'rpgmaps.css'");
+
+    // Stylesheet-Listen und Cache-Dateien aller Themes neu aufbauen (debugging.md #10)
+    $tids = $db->simple_select('themes', 'tid');
+    while ($theme = $db->fetch_array($tids)) {
+        $cache_file = MYBB_ROOT . 'cache/themes/theme' . (int)$theme['tid'] . '/rpgmaps.css';
+        if (is_file($cache_file)) {
+            unlink($cache_file);
+        }
+        update_theme_stylesheet_list($theme['tid']);
+    }
 }

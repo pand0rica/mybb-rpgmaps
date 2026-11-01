@@ -124,3 +124,4 @@ $l['rpgmaps_default_currency'] = 'Standardwährung';
 $l['rpgmaps_default_currency_desc'] = 'Name der Währung für Preise';
 $l['rpgmaps_enable_occupancy'] = 'Bewohnersystem aktivieren';
 $l['rpgmaps_enable_occupancy_desc'] = 'Erlaubt mehrere Bewohner pro Haus';
+$l['rpgmaps_invalid_key'] = 'Ungültiger Sicherheitsschlüssel. Bitte versuche es erneut.';
