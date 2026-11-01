@@ -1,127 +1,134 @@
 <?php
 /**
- * RPG Maps Plugin - German (Du) Admin Language File
+ * RPG Maps – Deutsche Sprachdatei (du) – ACP
+ *
+ * @package rpgmaps
  */
 
+// ACP
 $l['rpgmaps'] = 'RPG Maps';
-$l['rpgmaps_can_manage'] = 'Kann RPG Maps verwalten';
 $l['rpgmaps_admin_menu'] = 'RPG Maps';
-
-// Admin navigation
-$l['rpgmaps_nav_maps'] = 'Karten';
-$l['rpgmaps_nav_plots'] = 'Bauplätze';
-$l['rpgmaps_nav_house_types'] = 'Haustypen';
-$l['rpgmaps_nav_houses'] = 'Häuser';
-$l['rpgmaps_nav_actions'] = 'Aktionen';
-
-// Maps management
-$l['rpgmaps_manage_maps'] = 'Karten verwalten';
-$l['rpgmaps_add_map'] = 'Neue Karte hinzufügen';
+$l['rpgmaps_can_manage'] = 'Kann RPG Maps verwalten?';
+$l['rpgmaps_invalid_key'] = 'Ungültiger Sicherheitsschlüssel. Bitte versuche es erneut.';
+$l['rpgmaps_tab_overview'] = 'Übersicht';
+$l['rpgmaps_tab_overview_desc'] = 'Kennzahlen zu Karten und Bauanträgen.';
+$l['rpgmaps_tab_maps_desc'] = 'Karten anlegen und ihre Bauplätze verwalten.';
+$l['rpgmaps_tab_house_types_desc'] = 'Haustypen, aus denen Mitglieder beim Bauen wählen.';
+$l['rpgmaps_tab_actions_desc'] = 'Offene Bauanträge genehmigen oder ablehnen.';
+$l['rpgmaps_overview_maps'] = 'Karten';
+$l['rpgmaps_overview_house_types'] = 'Haustypen';
+$l['rpgmaps_overview_pending'] = 'Offene Bauanträge';
+$l['rpgmaps_options'] = 'Optionen';
+$l['rpgmaps_controls'] = 'Optionen';
+$l['rpgmaps_created'] = 'Erstellt';
+$l['rpgmaps_edit'] = 'Bearbeiten';
+$l['rpgmaps_delete'] = 'Löschen';
+$l['rpgmaps_save'] = 'Speichern';
+$l['rpgmaps_status'] = 'Status';
+$l['rpgmaps_current_image'] = 'Aktuelles Bild';
+$l['rpgmaps_new_image'] = 'Neues Bild (optional)';
+$l['rpgmaps_new_image_desc'] = 'Leer lassen, um das aktuelle Bild zu behalten.';
+$l['rpgmaps_image_desc'] = 'PNG, JPG oder GIF. Größe und erlaubte Dateitypen legst du in den Plugin-Einstellungen fest.';
+$l['rpgmaps_upload_failed'] = 'Die Datei konnte nicht hochgeladen werden.';
+$l['rpgmaps_upload_invalid'] = 'Upload abgelehnt: {1}';
+$l['rpgmaps_manage_maps'] = 'Karten';
+$l['rpgmaps_add_map'] = 'Karte hinzufügen';
 $l['rpgmaps_edit_map'] = 'Karte bearbeiten';
-$l['rpgmaps_delete_map'] = 'Karte löschen';
-$l['rpgmaps_map_name'] = 'Kartenname';
+$l['rpgmaps_map_name'] = 'Titel';
 $l['rpgmaps_map_description'] = 'Beschreibung';
 $l['rpgmaps_map_image'] = 'Kartenbild';
-$l['rpgmaps_map_width'] = 'Breite';
-$l['rpgmaps_map_height'] = 'Höhe';
-$l['rpgmaps_map_added'] = 'Karte wurde erfolgreich hinzugefügt';
-$l['rpgmaps_map_updated'] = 'Karte wurde erfolgreich aktualisiert';
-$l['rpgmaps_map_deleted'] = 'Karte wurde erfolgreich gelöscht';
-$l['rpgmaps_no_maps'] = 'Keine Karten vorhanden';
-
-// Plots management
-$l['rpgmaps_manage_plots'] = 'Bauplätze verwalten';
-$l['rpgmaps_add_plot'] = 'Neuen Bauplatz hinzufügen';
+$l['rpgmaps_map_size'] = 'Größe';
+$l['rpgmaps_map_width'] = 'Breite (px)';
+$l['rpgmaps_map_height'] = 'Höhe (px)';
+$l['rpgmaps_map_size_desc'] = 'Originalgröße des Kartenbilds. Die Koordinaten der Bauplätze beziehen sich auf diese Größe.';
+$l['rpgmaps_map_scale'] = 'Skalierungsfaktor';
+$l['rpgmaps_map_added'] = 'Karte hinzugefügt.';
+$l['rpgmaps_map_updated'] = 'Karte gespeichert.';
+$l['rpgmaps_map_deleted'] = 'Karte gelöscht.';
+$l['rpgmaps_map_not_found'] = 'Karte nicht gefunden.';
+$l['rpgmaps_no_maps'] = 'Noch keine Karten vorhanden.';
+$l['rpgmaps_error_title_required'] = 'Bitte gib einen Titel ein.';
+$l['rpgmaps_confirm_delete_map'] = 'Möchtest du die Karte „{1}“ wirklich löschen? Alle Bauplätze, Häuser und Bewohnenden darauf werden ebenfalls gelöscht.';
+$l['rpgmaps_manage_plots'] = 'Bauplätze';
+$l['rpgmaps_plots_of_map'] = 'Bauplätze: {1}';
+$l['rpgmaps_add_plot'] = 'Bauplatz hinzufügen';
 $l['rpgmaps_edit_plot'] = 'Bauplatz bearbeiten';
-$l['rpgmaps_delete_plot'] = 'Bauplatz löschen';
-$l['rpgmaps_plot_name'] = 'Platzname';
-$l['rpgmaps_plot_map'] = 'Karte';
-$l['rpgmaps_plot_position'] = 'Position';
-$l['rpgmaps_plot_x'] = 'X-Koordinate';
-$l['rpgmaps_plot_y'] = 'Y-Koordinate';
-$l['rpgmaps_plot_size'] = 'Größe';
-$l['rpgmaps_plot_price'] = 'Preis';
-$l['rpgmaps_plot_added'] = 'Bauplatz wurde erfolgreich hinzugefügt';
-$l['rpgmaps_plot_updated'] = 'Bauplatz wurde erfolgreich aktualisiert';
-$l['rpgmaps_plot_deleted'] = 'Bauplatz wurde erfolgreich gelöscht';
-$l['rpgmaps_no_plots'] = 'Keine Bauplätze vorhanden';
-
-// House types management
-$l['rpgmaps_manage_house_types'] = 'Haustypen verwalten';
-$l['rpgmaps_add_house_type'] = 'Neuen Haustyp hinzufügen';
+$l['rpgmaps_plot_key'] = 'Bauplatz-Kennung';
+$l['rpgmaps_plot_key_desc'] = 'Pro Karte eindeutig. Wird automatisch erzeugt, wenn du das Feld leer lässt.';
+$l['rpgmaps_plot_position'] = 'Position / Größe';
+$l['rpgmaps_plot_x'] = 'X-Position (px)';
+$l['rpgmaps_plot_y'] = 'Y-Position (px)';
+$l['rpgmaps_plot_coords_desc'] = 'In Pixeln bezogen auf die Originalgröße der Karte; im Browser wird automatisch skaliert.';
+$l['rpgmaps_plot_w'] = 'Breite (px)';
+$l['rpgmaps_plot_h'] = 'Höhe (px)';
+$l['rpgmaps_plot_rotation'] = 'Drehung (Grad)';
+$l['rpgmaps_plot_rotation_desc'] = '0 bis 359';
+$l['rpgmaps_plot_tooltip'] = 'Beschriftung';
+$l['rpgmaps_plot_tooltip_desc'] = 'Wird beim Überfahren des Bauplatzes angezeigt.';
+$l['rpgmaps_plot_status_free'] = 'Frei';
+$l['rpgmaps_plot_status_pending'] = 'Beantragt';
+$l['rpgmaps_plot_status_built'] = 'Bebaut';
+$l['rpgmaps_plot_added'] = 'Bauplatz hinzugefügt.';
+$l['rpgmaps_plot_updated'] = 'Bauplatz gespeichert.';
+$l['rpgmaps_plot_deleted'] = 'Bauplatz gelöscht.';
+$l['rpgmaps_plot_not_found'] = 'Bauplatz nicht gefunden.';
+$l['rpgmaps_no_plots'] = 'Auf dieser Karte gibt es noch keine Bauplätze.';
+$l['rpgmaps_confirm_delete_plot'] = 'Diesen Bauplatz löschen? Ein Haus darauf und seine Bewohnenden werden ebenfalls gelöscht.';
+$l['rpgmaps_manage_house_types'] = 'Haustypen';
+$l['rpgmaps_add_house_type'] = 'Haustyp hinzufügen';
 $l['rpgmaps_edit_house_type'] = 'Haustyp bearbeiten';
-$l['rpgmaps_delete_house_type'] = 'Haustyp löschen';
 $l['rpgmaps_house_type_name'] = 'Name';
 $l['rpgmaps_house_type_description'] = 'Beschreibung';
 $l['rpgmaps_house_type_image'] = 'Bild';
-$l['rpgmaps_house_type_cost'] = 'Baukosten';
-$l['rpgmaps_house_type_max_occupants'] = 'Max. Bewohner';
-$l['rpgmaps_house_type_added'] = 'Haustyp wurde erfolgreich hinzugefügt';
-$l['rpgmaps_house_type_updated'] = 'Haustyp wurde erfolgreich aktualisiert';
-$l['rpgmaps_house_type_deleted'] = 'Haustyp wurde erfolgreich gelöscht';
-$l['rpgmaps_no_house_types'] = 'Keine Haustypen vorhanden';
-
-// Houses management
-$l['rpgmaps_manage_houses'] = 'Häuser verwalten';
-$l['rpgmaps_edit_house'] = 'Haus bearbeiten';
-$l['rpgmaps_delete_house'] = 'Haus löschen';
-$l['rpgmaps_house_owner'] = 'Besitzer';
-$l['rpgmaps_house_type'] = 'Haustyp';
-$l['rpgmaps_house_plot'] = 'Bauplatz';
-$l['rpgmaps_house_name'] = 'Hausname';
-$l['rpgmaps_house_status'] = 'Status';
-$l['rpgmaps_house_built_date'] = 'Gebaut am';
-$l['rpgmaps_house_updated'] = 'Haus wurde erfolgreich aktualisiert';
-$l['rpgmaps_house_deleted'] = 'Haus wurde erfolgreich gelöscht';
-$l['rpgmaps_no_houses'] = 'Keine Häuser vorhanden';
-
-// Status values
-$l['rpgmaps_status_pending'] = 'Ausstehend';
-$l['rpgmaps_status_approved'] = 'Genehmigt';
-$l['rpgmaps_status_rejected'] = 'Abgelehnt';
-$l['rpgmaps_status_active'] = 'Aktiv';
-
-// Actions management
-$l['rpgmaps_manage_actions'] = 'Aktionen verwalten';
-$l['rpgmaps_action_type'] = 'Aktionstyp';
-$l['rpgmaps_action_user'] = 'Benutzer';
-$l['rpgmaps_action_date'] = 'Datum';
-$l['rpgmaps_action_status'] = 'Status';
+$l['rpgmaps_house_type_icon_scale'] = 'Icon-Skalierung';
+$l['rpgmaps_house_type_added'] = 'Haustyp hinzugefügt.';
+$l['rpgmaps_house_type_updated'] = 'Haustyp gespeichert.';
+$l['rpgmaps_house_type_deleted'] = 'Haustyp gelöscht.';
+$l['rpgmaps_house_type_not_found'] = 'Haustyp nicht gefunden.';
+$l['rpgmaps_house_type_in_use'] = 'Dieser Haustyp kann nicht gelöscht werden, weil noch Häuser ihn verwenden.';
+$l['rpgmaps_no_house_types'] = 'Noch keine Haustypen vorhanden.';
+$l['rpgmaps_error_name_required'] = 'Bitte gib einen Namen ein.';
+$l['rpgmaps_confirm_delete_house_type'] = 'Möchtest du diesen Haustyp wirklich löschen?';
+$l['rpgmaps_manage_actions'] = 'Bauanträge';
+$l['rpgmaps_action_type'] = 'Art';
+$l['rpgmaps_action_user'] = 'Mitglied';
+$l['rpgmaps_action_target'] = 'Bauplatz';
+$l['rpgmaps_action_target_plot'] = '{1} – Bauplatz {2}';
+$l['rpgmaps_action_date'] = 'Eingereicht';
 $l['rpgmaps_action_approve'] = 'Genehmigen';
 $l['rpgmaps_action_reject'] = 'Ablehnen';
-$l['rpgmaps_action_approved'] = 'Aktion wurde genehmigt';
-$l['rpgmaps_action_rejected'] = 'Aktion wurde abgelehnt';
-$l['rpgmaps_no_actions'] = 'Keine ausstehenden Aktionen';
+$l['rpgmaps_action_approved'] = 'Bauantrag genehmigt.';
+$l['rpgmaps_action_rejected'] = 'Bauantrag abgelehnt.';
+$l['rpgmaps_confirm_reject'] = 'Möchtest du diesen Bauantrag wirklich ablehnen?';
+$l['rpgmaps_no_actions'] = 'Keine offenen Bauanträge.';
 
-// Action types
-$l['rpgmaps_action_build'] = 'Haus bauen';
-$l['rpgmaps_action_move_in'] = 'Einziehen';
-$l['rpgmaps_action_move_out'] = 'Ausziehen';
-
-// Form labels
-$l['rpgmaps_submit'] = 'Absenden';
-$l['rpgmaps_cancel'] = 'Abbrechen';
-$l['rpgmaps_save'] = 'Speichern';
-$l['rpgmaps_delete'] = 'Löschen';
-$l['rpgmaps_edit'] = 'Bearbeiten';
-$l['rpgmaps_view'] = 'Ansehen';
-$l['rpgmaps_back'] = 'Zurück';
-
-// Messages
-$l['rpgmaps_error'] = 'Fehler';
-$l['rpgmaps_success'] = 'Erfolg';
-$l['rpgmaps_confirm_delete'] = 'Möchtest du diesen Eintrag wirklich löschen?';
-$l['rpgmaps_required_field'] = 'Dieses Feld ist erforderlich';
-$l['rpgmaps_invalid_input'] = 'Ungültige Eingabe';
-$l['rpgmaps_no_permission'] = 'Du hast keine Berechtigung für diese Aktion';
-
-// Settings
-$l['rpgmaps_settings_title'] = 'RPG Maps Einstellungen';
-$l['rpgmaps_settings_desc'] = 'Konfiguriere das RPG Maps Plugin';
-$l['rpgmaps_enable_approval'] = 'Genehmigungssystem aktivieren';
-$l['rpgmaps_enable_approval_desc'] = 'Erfordert Admin-Genehmigung für Bauanträge';
-$l['rpgmaps_default_currency'] = 'Standardwährung';
-$l['rpgmaps_default_currency_desc'] = 'Name der Währung für Preise';
-$l['rpgmaps_enable_occupancy'] = 'Bewohnersystem aktivieren';
-$l['rpgmaps_enable_occupancy_desc'] = 'Erlaubt mehrere Bewohner pro Haus';
-$l['rpgmaps_invalid_key'] = 'Ungültiger Sicherheitsschlüssel. Bitte versuche es erneut.';
+// Meldungen (gemeinsam mit dem Frontend)
+$l['rpgmaps_msg_plot_not_found'] = 'Bauplatz nicht gefunden.';
+$l['rpgmaps_msg_plot_unavailable'] = 'Dieser Bauplatz ist nicht verfügbar.';
+$l['rpgmaps_msg_house_type_not_found'] = 'Bitte wähle einen gültigen Haustyp.';
+$l['rpgmaps_msg_invalid_max_occupants'] = 'Bitte gib eine Anzahl an Bewohnenden zwischen 1 und 20 ein.';
+$l['rpgmaps_msg_build_requested'] = 'Dein Bauantrag wurde eingereicht und wartet auf die Freigabe durch das Team.';
+$l['rpgmaps_msg_house_unavailable'] = 'Dieses Haus ist nicht verfügbar.';
+$l['rpgmaps_msg_house_full'] = 'Dieses Haus ist voll belegt.';
+$l['rpgmaps_msg_already_resident'] = 'Du wohnst bereits in diesem Haus.';
+$l['rpgmaps_msg_moved_in'] = 'Du bist in das Haus eingezogen.';
+$l['rpgmaps_msg_house_not_found'] = 'Haus nicht gefunden.';
+$l['rpgmaps_msg_not_resident'] = 'Du wohnst nicht in diesem Haus.';
+$l['rpgmaps_msg_moved_out'] = 'Du bist ausgezogen.';
+$l['rpgmaps_msg_only_occupants'] = 'Nur Bewohnende dieses Hauses können es bearbeiten.';
+$l['rpgmaps_msg_description_updated'] = 'Beschreibung gespeichert.';
+$l['rpgmaps_msg_max_below_current'] = 'Das Maximum darf nicht unter der aktuellen Zahl der Bewohnenden liegen.';
+$l['rpgmaps_msg_settings_updated'] = 'Haus-Einstellungen gespeichert.';
+$l['rpgmaps_msg_invalid_action'] = 'Dieser Antrag existiert nicht oder wurde bereits bearbeitet.';
+$l['rpgmaps_msg_build_approved'] = 'Bauantrag genehmigt, das Haus wurde angelegt.';
+$l['rpgmaps_msg_action_rejected'] = 'Bauantrag abgelehnt.';
+$l['rpgmaps_msg_invalid_token'] = 'Deine Sitzung ist abgelaufen. Bitte lade die Seite neu und versuche es noch einmal.';
+$l['rpgmaps_msg_unknown_action'] = 'Unbekannte Aktion.';
+$l['rpgmaps_msg_map_not_found'] = 'Karte nicht gefunden.';
+$l['rpgmaps_msg_login_required'] = 'Bitte melde dich an, um das zu tun.';
+$l['rpgmaps_msg_invalid_params'] = 'Ungültige Eingabe.';
+$l['rpgmaps_msg_error_generic'] = 'Da ist etwas schiefgelaufen. Bitte versuche es noch einmal.';
+$l['rpgmaps_msg_network_error'] = 'Verbindungsfehler. Bitte versuche es noch einmal.';
+$l['rpgmaps_msg_reload_page'] = 'Bitte lade die Seite neu.';
+$l['rpgmaps_action_build'] = 'Bauantrag';
+$l['rpgmaps_deleted_account'] = 'Gelöschter Account';

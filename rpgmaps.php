@@ -37,12 +37,8 @@ if ($mybb->get_input('action') === 'ajax_rpgmaps') {
 require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
 require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/security.php';
 
-try {
-    $db_helper = new RPGMapsDatabase();
-    $security = new RPGMapsSecurity();
-} catch (Exception $e) {
-    error('Error initializing RPG Maps: ' . $e->getMessage());
-}
+$db_helper = new RPGMapsDatabase();
+$security = new RPGMapsSecurity();
 
 // Add JavaScript to header (CSS is loaded automatically by MyBB from themestylesheets)
 $headerinclude .= '<script src="' . $mybb->settings['bburl'] . '/inc/plugins/rpgmaps/assets/rpgmaps.js"></script>' . "\n";
@@ -58,16 +54,13 @@ add_breadcrumb($lang->rpgmaps_maps, "rpgmaps.php");
 
 if ($map_id <= 0) {
     // Show map list if no map selected
-    try {
-        $maps = $db_helper->getMaps();
-    } catch (Exception $e) {
-        error('Database error: ' . $e->getMessage());
-    }
+    $maps = $db_helper->getMaps();
     
     $map_list_items = '';
     if (!empty($maps)) {
         foreach ($maps as $map) {
-            $rpgmaps_map_url = $mybb->settings['bburl'] . '/rpgmaps.php?map_id=' . (int)$map['id'];
+            $rpgmaps_map_id = (int)$map['id'];
+            $rpgmaps_map_url = $mybb->settings['bburl'] . '/rpgmaps.php?map_id=' . $rpgmaps_map_id;
             $rpgmaps_map_title = htmlspecialchars_uni($map['title']);
             $rpgmaps_map_description = htmlspecialchars_uni($map['description']);
             eval('$map_list_items .= "' . $templates->get('rpgmaps_map_row') . '";');
@@ -205,6 +198,15 @@ if ($map_id <= 0) {
         'close' => $lang->rpgmaps_close,
         'no_occupants' => $lang->rpgmaps_no_occupants,
         'house_settings' => $lang->rpgmaps_house_settings,
+        'login_required' => $lang->rpgmaps_msg_login_required,
+        'invalid_house_type' => $lang->rpgmaps_msg_house_type_not_found,
+        'invalid_max_occupants' => $lang->rpgmaps_msg_invalid_max_occupants,
+        'settings_saved' => $lang->rpgmaps_msg_settings_updated,
+        'description_updated' => $lang->rpgmaps_msg_description_updated,
+        'moved_out' => $lang->rpgmaps_msg_moved_out,
+        'error_generic' => $lang->rpgmaps_msg_error_generic,
+        'network_error' => $lang->rpgmaps_msg_network_error,
+        'reload_page' => $lang->rpgmaps_msg_reload_page,
     ]);
     
     // Prepare all variables for template

@@ -75,13 +75,13 @@ function rpgmaps_handle_user_deletion($uid)
 }
 
 /**
- * Show notification on index for staff members
+ * Hinweis auf offene Bauanträge auf der Startseite (nur Team mit ModCP-/ACP-Zugang)
  */
 function rpgmaps_index_notification()
 {
-    global $mybb, $db, $header;
+    global $mybb, $db, $lang, $header;
 
-    if ($mybb->usergroup['cancp'] != 1 && $mybb->usergroup['canmodcp'] != 1) {
+    if ((int)($mybb->usergroup['cancp'] ?? 0) !== 1 && (int)($mybb->usergroup['canmodcp'] ?? 0) !== 1) {
         return;
     }
 
@@ -92,25 +92,26 @@ function rpgmaps_index_notification()
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
     $db_helper = new RPGMapsDatabase();
 
-    $count = count($db_helper->getPendingActions());
-
+    $count = count($db_helper->getPendingActions('build'));
     if ($count < 1) {
         return;
     }
 
+    $lang->load('rpgmaps');
+
     $links = '';
-    if ($mybb->usergroup['canmodcp'] == 1) {
-        $links .= ' &mdash; <a href="' . $mybb->settings['bburl'] . '/modcp.php?action=rpgmaps">Mod-CP</a>';
+    if ((int)$mybb->usergroup['canmodcp'] === 1) {
+        $links .= ' &mdash; <a href="' . htmlspecialchars_uni($mybb->settings['bburl']) . '/modcp.php?action=rpgmaps">' . $lang->rpgmaps_index_link_modcp . '</a>';
     }
-    if ($mybb->usergroup['cancp'] == 1) {
-        $links .= ' &mdash; <a href="' . $mybb->settings['bburl'] . '/admin/index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions">Admin-CP</a>';
+    if ((int)$mybb->usergroup['cancp'] === 1) {
+        $links .= ' &mdash; <a href="' . htmlspecialchars_uni($mybb->settings['bburl']) . '/' . htmlspecialchars_uni($mybb->config['admin_dir'] ?? 'admin') . '/index.php?module=tools-rpgmaps&amp;action=rpgmaps&amp;sub=pending_actions">' . $lang->rpgmaps_index_link_acp . '</a>';
     }
 
-    $text = ($count == 1)
-        ? 'Es gibt 1 ausstehenden Bauantrag zu pr&uuml;fen.'
-        : 'Es gibt ' . (int)$count . ' ausstehende Bauantr&auml;ge zu pr&uuml;fen.';
+    $text = $count === 1
+        ? $lang->rpgmaps_index_pending_one
+        : $lang->sprintf($lang->rpgmaps_index_pending_many, $count);
 
-    $header .= '<div class="pm_alert"><strong>RPG Maps:</strong> ' . $text . $links . '</div>';
+    $header .= '<div class="pm_alert"><strong>' . $lang->rpgmaps_name . ':</strong> ' . $text . $links . '</div>';
 }
 
 /**

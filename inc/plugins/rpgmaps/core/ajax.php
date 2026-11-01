@@ -53,7 +53,7 @@ function rpgmaps_handle_ajax($action)
     $csrf_exempt = ['rpgmaps_get_map', 'rpgmaps_get_house_info'];
     $token = $mybb->get_input('token', MyBB::INPUT_STRING);
     if (!in_array($action, $csrf_exempt, true) && ($mybb->request_method !== 'post' || !$security->verifyCSRFToken($token))) {
-        rpgmaps_json_output(['success' => false, 'message' => 'CSRF token verification failed', 'error' => 'CSRF token verification failed']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_invalid_token'), 'error' => rpgmaps_lang('rpgmaps_msg_invalid_token')]);
     }
     
     // Dispatch to appropriate handler
@@ -87,7 +87,7 @@ function rpgmaps_handle_ajax($action)
             break;
             
         default:
-            rpgmaps_json_output(['success' => false, 'message' => 'Unknown action', 'error' => 'Unknown action']);
+            rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_unknown_action'), 'error' => rpgmaps_lang('rpgmaps_msg_unknown_action')]);
     }
 }
 
@@ -101,7 +101,7 @@ function rpgmaps_ajax_get_map()
     $map_id = $mybb->get_input('map_id', MyBB::INPUT_INT);
     
     if ($map_id <= 0) {
-        rpgmaps_json_output(['success' => false, 'message' => 'Invalid map ID', 'error' => 'Invalid map ID']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_map_not_found'), 'error' => rpgmaps_lang('rpgmaps_msg_map_not_found')]);
     }
     
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
@@ -110,7 +110,7 @@ function rpgmaps_ajax_get_map()
     // Get map
     $map = $db_helper->getMapById($map_id);
     if (!$map) {
-        rpgmaps_json_output(['success' => false, 'message' => 'Map not found', 'error' => 'Map not found']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_map_not_found'), 'error' => rpgmaps_lang('rpgmaps_msg_map_not_found')]);
     }
     
     // Get plots
@@ -158,7 +158,7 @@ function rpgmaps_ajax_build_request($manager, $security)
 
     // Check if user is logged in
     if (!$security->isUserLoggedIn()) {
-        rpgmaps_json_output(['success' => false, 'message' => 'You must be logged in', 'error' => 'You must be logged in']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_login_required'), 'error' => rpgmaps_lang('rpgmaps_msg_login_required')]);
     }
 
     $plot_id       = $mybb->get_input('plot_id',       MyBB::INPUT_INT);
@@ -178,11 +178,11 @@ function rpgmaps_ajax_build_request($manager, $security)
     }
     
     if ($plot_id <= 0 || $house_type_id <= 0) {
-        rpgmaps_json_output(['success' => false, 'message' => 'Invalid parameters', 'error' => 'Invalid parameters']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_invalid_params'), 'error' => rpgmaps_lang('rpgmaps_msg_invalid_params')]);
     }
     
     if ($max_occupants < 1 || $max_occupants > 20) {
-        rpgmaps_json_output(['success' => false, 'message' => 'Invalid max occupants value', 'error' => 'Invalid max occupants value']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_invalid_max_occupants'), 'error' => rpgmaps_lang('rpgmaps_msg_invalid_max_occupants')]);
     }
     
     // Request build
@@ -202,14 +202,14 @@ function rpgmaps_ajax_move_in_request($manager, $security)
 
     // Check if user is logged in
     if (!$security->isUserLoggedIn()) {
-        rpgmaps_json_output(['success' => false, 'message' => 'You must be logged in', 'error' => 'You must be logged in']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_login_required'), 'error' => rpgmaps_lang('rpgmaps_msg_login_required')]);
     }
 
     $house_id = $mybb->get_input('house_id', MyBB::INPUT_INT);
     $user_id  = $security->getCurrentUserID();
 
     if ($house_id <= 0) {
-        rpgmaps_json_output(['success' => false, 'message' => 'Invalid house ID', 'error' => 'Invalid house ID']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_house_not_found'), 'error' => rpgmaps_lang('rpgmaps_msg_house_not_found')]);
     }
 
     // Request move in
@@ -229,14 +229,14 @@ function rpgmaps_ajax_move_out_request($manager, $security)
 
     // Check if user is logged in
     if (!$security->isUserLoggedIn()) {
-        rpgmaps_json_output(['success' => false, 'message' => 'You must be logged in', 'error' => 'You must be logged in']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_login_required'), 'error' => rpgmaps_lang('rpgmaps_msg_login_required')]);
     }
 
     $house_id = $mybb->get_input('house_id', MyBB::INPUT_INT);
     $user_id  = $security->getCurrentUserID();
 
     if ($house_id <= 0) {
-        rpgmaps_json_output(['success' => false, 'message' => 'Invalid house ID', 'error' => 'Invalid house ID']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_house_not_found'), 'error' => rpgmaps_lang('rpgmaps_msg_house_not_found')]);
     }
 
     // Request move out
@@ -255,7 +255,7 @@ function rpgmaps_ajax_get_house_info()
     $house_id = $mybb->get_input('house_id', MyBB::INPUT_INT);
     
     if ($house_id <= 0) {
-        rpgmaps_json_output(['success' => false, 'message' => 'Invalid house ID', 'error' => 'Invalid house ID']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_house_not_found'), 'error' => rpgmaps_lang('rpgmaps_msg_house_not_found')]);
     }
     
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
@@ -264,7 +264,7 @@ function rpgmaps_ajax_get_house_info()
     // Get house
     $house = $db_helper->getHouseById($house_id);
     if (!$house) {
-        rpgmaps_json_output(['success' => false, 'message' => 'House not found', 'error' => 'House not found']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_house_not_found'), 'error' => rpgmaps_lang('rpgmaps_msg_house_not_found')]);
     }
     
     // Get house type
@@ -318,7 +318,7 @@ function rpgmaps_ajax_update_description($manager, $security)
 
     // Check if user is logged in
     if (!$security->isUserLoggedIn()) {
-        rpgmaps_json_output(['success' => false, 'message' => 'You must be logged in', 'error' => 'You must be logged in']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_login_required'), 'error' => rpgmaps_lang('rpgmaps_msg_login_required')]);
     }
 
     $house_id    = $mybb->get_input('house_id',    MyBB::INPUT_INT);
@@ -331,7 +331,7 @@ function rpgmaps_ajax_update_description($manager, $security)
     }
     
     if ($house_id <= 0) {
-        rpgmaps_json_output(['success' => false, 'message' => 'Invalid house ID', 'error' => 'Invalid house ID']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_house_not_found'), 'error' => rpgmaps_lang('rpgmaps_msg_house_not_found')]);
     }
     
     // Update description
@@ -370,7 +370,7 @@ function rpgmaps_ajax_update_house_settings($manager, $security)
 
     // Check if user is logged in
     if (!$security->isUserLoggedIn()) {
-        rpgmaps_json_output(['success' => false, 'message' => 'You must be logged in', 'error' => 'You must be logged in']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_login_required'), 'error' => rpgmaps_lang('rpgmaps_msg_login_required')]);
     }
 
     $house_id      = $mybb->get_input('house_id',      MyBB::INPUT_INT);
@@ -380,11 +380,11 @@ function rpgmaps_ajax_update_house_settings($manager, $security)
     $user_id       = $security->getCurrentUserID();
 
     if ($house_id <= 0 || $house_type_id <= 0) {
-        rpgmaps_json_output(['success' => false, 'message' => 'Invalid parameters', 'error' => 'Invalid parameters']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_invalid_params'), 'error' => rpgmaps_lang('rpgmaps_msg_invalid_params')]);
     }
 
     if ($max_occupants < 1 || $max_occupants > 20) {
-        rpgmaps_json_output(['success' => false, 'message' => 'Invalid max occupants value', 'error' => 'Invalid max occupants value']);
+        rpgmaps_json_output(['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_invalid_max_occupants'), 'error' => rpgmaps_lang('rpgmaps_msg_invalid_max_occupants')]);
     }
 
     if (!mb_check_encoding($house_name, 'UTF-8')) {

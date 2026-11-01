@@ -1,113 +1,64 @@
 <?php
 /**
- * RPG Maps Plugin - Admin Control Panel Module
- * Manages maps, build plots, house types, and pending actions
- * 
+ * RPG Maps – ACP-Modul
+ * Verwaltung von Karten, Bauplätzen, Haustypen und offenen Bauanträgen.
+ *
  * @package rpgmaps
  */
 
-// Prevent direct access
-if (!defined('IN_MYBB')) {
-    exit;
+if (!defined('IN_MYBB') || !defined('IN_ADMINCP')) {
+    die('Direct initialization of this file is not allowed.');
 }
 
-// Load language files
-global $lang;
+global $mybb, $lang;
+
 $lang->load('rpgmaps');
 
-// Load helpers
 require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
 require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/security.php';
 require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/rpgmaps.class.php';
 
-// Initialize
-global $mybb, $admin, $db;
+define('RPGMAPS_ACP_URL', 'index.php?module=tools-rpgmaps');
 
-// Create instances
-$db_helper = new RPGMapsDatabase();
-$manager = new RPGMapsManager();
-
-// Get action
-$action = $mybb->get_input('sub');
-if ($action === '') {
-    $action = 'overview';
+switch ($mybb->get_input('sub')) {
+    case 'maps':               rpgmaps_admin_maps(); break;
+    case 'maps_add':           rpgmaps_admin_maps_form(false); break;
+    case 'maps_edit':          rpgmaps_admin_maps_form(true); break;
+    case 'maps_delete':        rpgmaps_admin_maps_delete(); break;
+    case 'buildplots':         rpgmaps_admin_buildplots(); break;
+    case 'buildplots_add':     rpgmaps_admin_buildplots_form(false); break;
+    case 'buildplots_edit':    rpgmaps_admin_buildplots_form(true); break;
+    case 'buildplots_delete':  rpgmaps_admin_buildplots_delete(); break;
+    case 'house_types':        rpgmaps_admin_house_types(); break;
+    case 'house_types_add':    rpgmaps_admin_house_types_form(false); break;
+    case 'house_types_edit':   rpgmaps_admin_house_types_form(true); break;
+    case 'house_types_delete': rpgmaps_admin_house_types_delete(); break;
+    case 'pending_actions':    rpgmaps_admin_pending_actions(); break;
+    case 'action_approve':     rpgmaps_admin_action_decide(true); break;
+    case 'action_reject':      rpgmaps_admin_action_decide(false); break;
+    default:                   rpgmaps_admin_overview();
 }
 
-// Check admin permission - simplified check
-// In production, implement proper permission checking
-if (!defined('IN_ADMINCP') || !IN_ADMINCP) {
-    die('Access Denied');
-}
+// ============ HELPER ============
 
-// Handle different sub-actions
-switch ($action) {
-    // ============ MAPS MANAGEMENT ============
-    case 'maps':
-        rpgmaps_admin_maps();
-        break;
-        
-    case 'maps_add':
-        rpgmaps_admin_maps_add();
-        break;
-        
-    case 'maps_edit':
-        rpgmaps_admin_maps_edit();
-        break;
-        
-    case 'maps_delete':
-        rpgmaps_admin_maps_delete();
-        break;
-        
-    // ============ BUILD PLOTS MANAGEMENT ============
-    case 'buildplots':
-        rpgmaps_admin_buildplots();
-        break;
-        
-    case 'buildplots_add':
-        rpgmaps_admin_buildplots_add();
-        break;
-        
-    case 'buildplots_edit':
-        rpgmaps_admin_buildplots_edit();
-        break;
-        
-    case 'buildplots_delete':
-        rpgmaps_admin_buildplots_delete();
-        break;
-        
-    // ============ HOUSE TYPES MANAGEMENT ============
-    case 'house_types':
-        rpgmaps_admin_house_types();
-        break;
-        
-    case 'house_types_add':
-        rpgmaps_admin_house_types_add();
-        break;
-        
-    case 'house_types_edit':
-        rpgmaps_admin_house_types_edit();
-        break;
-        
-    case 'house_types_delete':
-        rpgmaps_admin_house_types_delete();
-        break;
-        
-    // ============ PENDING ACTIONS ============
-    case 'pending_actions':
-        rpgmaps_admin_pending_actions();
-        break;
-        
-    case 'action_approve':
-        rpgmaps_admin_action_approve();
-        break;
-        
-    case 'action_reject':
-        rpgmaps_admin_action_reject();
-        break;
-        
-    // ============ OVERVIEW ============
-    default:
-        rpgmaps_admin_overview();
+/**
+ * URL zu einer Unterseite des Moduls.
+ *
+ * @param string $sub
+ * @param array  $params
+ * @return string
+ */
+function rpgmaps_acp_url($sub = '', array $params = [])
+{
+    $url = RPGMAPS_ACP_URL;
+    if ($sub !== '') {
+        $url .= '&action=rpgmaps&sub=' . $sub;
+    }
+    foreach ($params as $key => $value) {
+        $url .= '&' . $key . '=' . urlencode((string)$value);
+    }
+
+    return $url;
 }
 
 /**
@@ -120,12 +71,53 @@ function rpgmaps_acp_verify_key()
 
     if (!verify_post_check($mybb->get_input('my_post_key'), true)) {
         flash_message($lang->rpgmaps_invalid_key, 'error');
-        admin_redirect('index.php?module=tools-rpgmaps');
+        admin_redirect(rpgmaps_acp_url());
     }
 }
 
 /**
- * Bild-Upload im ACP über RPGMapsAsset (prüft Endung, MIME-Typ und Größe laut Settings).
+ * Seitenkopf mit Breadcrumb und Navigations-Tabs ausgeben.
+ *
+ * @param string $title       Seitentitel
+ * @param string $active_tab  overview|maps|house_types|pending_actions
+ * @param array  $breadcrumbs [Titel => URL]; letzte URL darf leer sein
+ */
+function rpgmaps_acp_header($title, $active_tab, array $breadcrumbs = [])
+{
+    global $page, $lang;
+
+    $page->add_breadcrumb_item($lang->rpgmaps, RPGMAPS_ACP_URL);
+    foreach ($breadcrumbs as $crumb => $url) {
+        $page->add_breadcrumb_item($crumb, $url);
+    }
+    $page->output_header($lang->rpgmaps . ' – ' . $title);
+
+    $page->output_nav_tabs([
+        'overview' => [
+            'title'       => $lang->rpgmaps_tab_overview,
+            'link'        => rpgmaps_acp_url(),
+            'description' => $lang->rpgmaps_tab_overview_desc,
+        ],
+        'maps' => [
+            'title'       => $lang->rpgmaps_manage_maps,
+            'link'        => rpgmaps_acp_url('maps'),
+            'description' => $lang->rpgmaps_tab_maps_desc,
+        ],
+        'house_types' => [
+            'title'       => $lang->rpgmaps_manage_house_types,
+            'link'        => rpgmaps_acp_url('house_types'),
+            'description' => $lang->rpgmaps_tab_house_types_desc,
+        ],
+        'pending_actions' => [
+            'title'       => $lang->rpgmaps_manage_actions,
+            'link'        => rpgmaps_acp_url('pending_actions'),
+            'description' => $lang->rpgmaps_tab_actions_desc,
+        ],
+    ], $active_tab);
+}
+
+/**
+ * Bild-Upload über RPGMapsAsset (prüft Endung, MIME-Typ und Größe laut Settings).
  * Ohne Upload bleibt der bisherige Dateiname erhalten. Ein ersetztes Bild wird gelöscht.
  *
  * @param string $field     Name des Dateifelds
@@ -180,940 +172,662 @@ function rpgmaps_acp_plot_size($value)
 }
 
 /**
- * Overview page
+ * Rotation auf 0–359 Grad normalisieren.
+ *
+ * @param int $rotation
+ * @return int
+ */
+function rpgmaps_acp_rotation($rotation)
+{
+    $rotation = (int)$rotation % 360;
+
+    return $rotation < 0 ? $rotation + 360 : $rotation;
+}
+
+/**
+ * Popup-Menü „Optionen“ bauen.
+ *
+ * @param string $id
+ * @param array  $items [Titel => URL] oder [Titel => [URL, onclick]]
+ * @return string
+ */
+function rpgmaps_acp_popup($id, array $items)
+{
+    global $lang;
+
+    $popup = new PopupMenu($id, $lang->rpgmaps_options);
+    foreach ($items as $title => $target) {
+        if (is_array($target)) {
+            $popup->add_item($title, $target[0], $target[1]);
+        } else {
+            $popup->add_item($title, $target);
+        }
+    }
+
+    return $popup->fetch();
+}
+
+/**
+ * Text für ein JavaScript-confirm() in einem onclick-Attribut absichern.
+ *
+ * @param string $text
+ * @return string
+ */
+function rpgmaps_acp_confirm_js($text)
+{
+    return 'return confirm(' . htmlspecialchars_uni(json_encode((string)$text)) . ');';
+}
+
+// ============ OVERVIEW ============
+
+/**
+ * Übersicht
  */
 function rpgmaps_admin_overview()
 {
-    global $mybb, $db, $page, $lang;
-    
-    $page->add_breadcrumb_item($lang->rpgmaps, 'index.php?module=tools-rpgmaps');
-    $page->output_header($lang->rpgmaps . ' - Overview');
-    
-    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
+    global $page, $lang;
+
     $db_helper = new RPGMapsDatabase();
-    
-    $map_count = count($db_helper->getMaps());
-    $pending_count = count($db_helper->getPendingActions());
-    
-    $sub_tabs = array(
-        'overview' => array(
-            'title' => 'Overview',
-            'link' => 'index.php?module=tools-rpgmaps',
-            'description' => 'Overview of RPG Maps statistics'
-        ),
-        'maps' => array(
-            'title' => 'Manage Maps',
-            'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps',
-            'description' => 'Manage city maps'
-        ),
-        'house_types' => array(
-            'title' => 'Manage House Types',
-            'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types',
-            'description' => 'Manage house types'
-        ),
-        'pending_actions' => array(
-            'title' => 'View Pending Actions',
-            'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions',
-            'description' => 'Review pending actions'
-        )
-    );
-    
-    $page->output_nav_tabs($sub_tabs, 'overview');
-    
+
+    rpgmaps_acp_header($lang->rpgmaps_tab_overview, 'overview');
+
     $table = new Table;
-    $table->construct_cell('<strong>Maps:</strong> ' . $map_count);
+    $table->construct_cell('<strong>' . $lang->rpgmaps_overview_maps . '</strong>', ['width' => '30%']);
+    $table->construct_cell(count($db_helper->getMaps()));
     $table->construct_row();
-    $table->construct_cell('<strong>Pending Actions:</strong> ' . $pending_count);
+    $table->construct_cell('<strong>' . $lang->rpgmaps_overview_house_types . '</strong>');
+    $table->construct_cell(count($db_helper->getHouseTypes()));
     $table->construct_row();
-    $table->output('RPG Maps - Overview');
-    
-    $table = new Table;
-    $table->construct_cell('<a href="index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps">Manage Maps</a>');
+    $table->construct_cell('<strong>' . $lang->rpgmaps_overview_pending . '</strong>');
+    $table->construct_cell('<a href="' . rpgmaps_acp_url('pending_actions') . '">' . count($db_helper->getPendingActions()) . '</a>');
     $table->construct_row();
-    $table->construct_cell('<a href="index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types">Manage House Types</a>');
-    $table->construct_row();
-    $table->construct_cell('<a href="index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions">View Pending Actions</a>');
-    $table->construct_row();
-    $table->output('Quick Links');
-    
+    $table->output($lang->rpgmaps_tab_overview);
+
     $page->output_footer();
 }
 
+// ============ MAPS ============
+
 /**
- * Maps list and management
+ * Kartenliste
  */
 function rpgmaps_admin_maps()
 {
-    global $mybb, $db, $lang, $page;
-    
-    $page->add_breadcrumb_item($lang->rpgmaps, 'index.php?module=tools-rpgmaps');
-    $page->add_breadcrumb_item($lang->rpgmaps_manage_maps);
-    $page->output_header($lang->rpgmaps . ' - ' . $lang->rpgmaps_manage_maps);
-    
-    $sub_tabs = array(
-        'overview' => array(
-            'title' => 'Overview',
-            'link' => 'index.php?module=tools-rpgmaps',
-        ),
-        'maps' => array(
-            'title' => 'Manage Maps',
-            'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps',
-        ),
-        'house_types' => array(
-            'title' => 'Manage House Types',
-            'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types',
-        ),
-        'pending_actions' => array(
-            'title' => 'View Pending Actions',
-            'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions',
-        )
-    );
-    
-    $page->output_nav_tabs($sub_tabs, 'maps');
-    
-    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
+    global $page, $lang;
+
     $db_helper = new RPGMapsDatabase();
-    
+
+    rpgmaps_acp_header($lang->rpgmaps_manage_maps, 'maps', [$lang->rpgmaps_manage_maps => '']);
+
+    $table = new Table;
+    $table->construct_header($lang->rpgmaps_map_name);
+    $table->construct_header($lang->rpgmaps_map_size, ['width' => '15%', 'class' => 'align_center']);
+    $table->construct_header($lang->rpgmaps_created, ['width' => '15%', 'class' => 'align_center']);
+    $table->construct_header($lang->rpgmaps_controls, ['width' => '10%', 'class' => 'align_center']);
+
     $maps = $db_helper->getMaps();
-    
-    $form_container = new FormContainer($lang->rpgmaps_manage_maps);
-    $form_container->output_row_header('Map Title');
-    $form_container->output_row_header('Width/Height');
-    $form_container->output_row_header('Created');
-    $form_container->output_row_header('Actions');
-    
     if (empty($maps)) {
-        $form_container->output_cell($lang->rpgmaps_no_maps, array('colspan' => 4));
-        $form_container->construct_row();
-    } else {
-        foreach ($maps as $map) {
-            $form_container->output_cell(htmlspecialchars_uni($map['title']));
-            $form_container->output_cell((int)$map['width'] . 'x' . (int)$map['height']);
-            $form_container->output_cell(date('Y-m-d', $map['created_at']));
-            
-            $popup = new PopupMenu('map_' . $map['id'], 'Options');
-            $popup->add_item('Edit', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_edit&id=' . (int)$map['id']);
-            $popup->add_item('Manage Plots', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots&map_id=' . (int)$map['id']);
-            $popup->add_item('Delete', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_delete&id=' . (int)$map['id'], 'return confirm(\'' . $lang->rpgmaps_confirm_delete . '\');');
-            
-            $form_container->output_cell($popup->fetch());
-            $form_container->construct_row();
+        $table->construct_cell($lang->rpgmaps_no_maps, ['colspan' => 4]);
+        $table->construct_row();
+    }
+
+    foreach ($maps as $map) {
+        $id = (int)$map['id'];
+        $table->construct_cell('<a href="' . rpgmaps_acp_url('buildplots', ['map_id' => $id]) . '"><strong>' . htmlspecialchars_uni($map['title']) . '</strong></a>');
+        $table->construct_cell((int)$map['width'] . ' × ' . (int)$map['height'], ['class' => 'align_center']);
+        $table->construct_cell(my_date('relative', (int)$map['created_at']), ['class' => 'align_center']);
+        $table->construct_cell(rpgmaps_acp_popup('map_' . $id, [
+            $lang->rpgmaps_edit          => rpgmaps_acp_url('maps_edit', ['id' => $id]),
+            $lang->rpgmaps_manage_plots  => rpgmaps_acp_url('buildplots', ['map_id' => $id]),
+            $lang->rpgmaps_delete        => rpgmaps_acp_url('maps_delete', ['id' => $id]),
+        ]), ['class' => 'align_center']);
+        $table->construct_row();
+    }
+
+    $table->output($lang->rpgmaps_manage_maps . ' &mdash; <a href="' . rpgmaps_acp_url('maps_add') . '">' . $lang->rpgmaps_add_map . '</a>');
+
+    $page->output_footer();
+}
+
+/**
+ * Karte anlegen/bearbeiten
+ *
+ * @param bool $edit
+ */
+function rpgmaps_admin_maps_form($edit)
+{
+    global $mybb, $db, $page, $lang;
+
+    $db_helper = new RPGMapsDatabase();
+    $map_id = $mybb->get_input('id', MyBB::INPUT_INT);
+    $map = [
+        'title' => '', 'description' => '', 'width' => 800, 'height' => 600,
+        'scale_factor' => 1.0, 'filename' => 'placeholder.png',
+    ];
+
+    if ($edit) {
+        $map = $db_helper->getMapById($map_id);
+        if (!$map) {
+            flash_message($lang->rpgmaps_map_not_found, 'error');
+            admin_redirect(rpgmaps_acp_url('maps'));
         }
     }
-    
-    $form_container->end();
-    
-    $table = new Table;
-    $table->construct_cell('<a href="index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_add">' . $lang->rpgmaps_add_map . '</a>');
-    $table->construct_row();
-    $table->output('Actions');
-    
-    $page->output_footer();
-}
 
-/**
- * Add map form
- */
-function rpgmaps_admin_maps_add()
-{
-    global $mybb, $db, $lang, $page;
-    
-    $page->add_breadcrumb_item($lang->rpgmaps, 'index.php?module=tools-rpgmaps');
-    $page->add_breadcrumb_item($lang->rpgmaps_manage_maps, 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
-    $page->add_breadcrumb_item($lang->rpgmaps_add_map);
-    $page->output_header($lang->rpgmaps . ' - ' . $lang->rpgmaps_add_map);
-    
-    $sub_tabs = array(
-        'overview' => array('title' => 'Overview', 'link' => 'index.php?module=tools-rpgmaps'),
-        'maps' => array('title' => 'Manage Maps', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps'),
-        'house_types' => array('title' => 'Manage House Types', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types'),
-        'pending_actions' => array('title' => 'View Pending Actions', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions')
-    );
-    $page->output_nav_tabs($sub_tabs, 'maps');
-    
-    if ($mybb->request_method == 'post') {
+    $self_url = $edit ? rpgmaps_acp_url('maps_edit', ['id' => $map_id]) : rpgmaps_acp_url('maps_add');
+
+    if ($mybb->request_method === 'post') {
         rpgmaps_acp_verify_key();
 
-        require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
-        $db_helper = new RPGMapsDatabase();
+        $title = trim($mybb->get_input('title'));
+        if ($title === '') {
+            flash_message($lang->rpgmaps_error_title_required, 'error');
+            admin_redirect($self_url);
+        }
 
-        // Handle file upload (Endung, MIME-Typ und Größe laut Settings)
-        $filename = rpgmaps_acp_handle_upload('map_image', 'map', 'placeholder.png', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_add');
+        $filename = rpgmaps_acp_handle_upload('map_image', 'map', (string)$map['filename'], $self_url);
 
-        $map_data = array(
-            'title' => $db->escape_string($mybb->get_input('title')),
-            'description' => $db->escape_string($mybb->get_input('description')),
-            'width' => $mybb->get_input('width', MyBB::INPUT_INT),
-            'height' => $mybb->get_input('height', MyBB::INPUT_INT),
-            'filename' => $db->escape_string($filename)
-        );
+        $data = [
+            'title'        => $db->escape_string($title),
+            'description'  => $db->escape_string($mybb->get_input('description')),
+            'width'        => max(1, $mybb->get_input('width', MyBB::INPUT_INT)),
+            'height'       => max(1, $mybb->get_input('height', MyBB::INPUT_INT)),
+            'scale_factor' => $mybb->get_input('scale_factor', MyBB::INPUT_FLOAT) ?: 1.0,
+            'filename'     => $db->escape_string($filename),
+        ];
 
-        $map_id = $db_helper->createMap($map_data);
-
-        flash_message($lang->rpgmaps_map_added, 'success');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
+        if ($edit) {
+            $db_helper->updateMap($map_id, $data);
+            flash_message($lang->rpgmaps_map_updated, 'success');
+        } else {
+            $data['created_by'] = (int)$mybb->user['uid'];
+            $db_helper->createMap($data);
+            flash_message($lang->rpgmaps_map_added, 'success');
+        }
+        admin_redirect(rpgmaps_acp_url('maps'));
     }
-    
-    $form = new Form('index.php?module=tools-rpgmaps&action=rpgmaps', 'post', '', 1);
-    echo $form->generate_hidden_field('sub', 'maps_add');
-    
-    $form_container = new FormContainer($lang->rpgmaps_add_map);
-    $form_container->output_row($lang->rpgmaps_map_name, '', $form->generate_text_box('title', '', array('id' => 'title')), 'title');
-    $form_container->output_row($lang->rpgmaps_map_description, '', $form->generate_text_area('description', '', array('id' => 'description')), 'description');
-    $form_container->output_row($lang->rpgmaps_map_width . ' (px)', '', $form->generate_numeric_field('width', '800', array('id' => 'width', 'min' => 100)), 'width');
-    $form_container->output_row($lang->rpgmaps_map_height . ' (px)', '', $form->generate_numeric_field('height', '600', array('id' => 'height', 'min' => 100)), 'height');
-    $form_container->output_row('Kartendatei', '', $form->generate_file_upload_box('map_image', array('id' => 'map_image')), 'map_image');
-    $form_container->end();
-    
-    $buttons[] = $form->generate_submit_button($lang->rpgmaps_save);
-    $form->output_submit_wrapper($buttons);
-    $form->end();
-    
-    $page->output_footer();
-}
 
-/**
- * Edit map form
- */
-function rpgmaps_admin_maps_edit()
-{
-    global $mybb, $db, $lang, $page;
-    
-    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
-    $db_helper = new RPGMapsDatabase();
-    
-    $map_id = $mybb->get_input('id', MyBB::INPUT_INT);
-    $map = $db_helper->getMapById($map_id);
-    
-    if (!$map) {
-        flash_message('Map not found', 'error');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
+    $title = $edit ? $lang->rpgmaps_edit_map : $lang->rpgmaps_add_map;
+    rpgmaps_acp_header($title, 'maps', [$lang->rpgmaps_manage_maps => rpgmaps_acp_url('maps'), $title => '']);
+
+    $form = new Form($self_url, 'post', '', 1);
+    $form_container = new FormContainer($title);
+
+    if ($edit && $map['filename'] !== '' && $map['filename'] !== 'placeholder.png') {
+        $form_container->output_row($lang->rpgmaps_current_image, '', '<img src="' . htmlspecialchars_uni($mybb->settings['bburl']) . '/inc/plugins/rpgmaps/assets/maps/' . htmlspecialchars_uni($map['filename']) . '" alt="" style="max-width: 400px; max-height: 300px;" />');
     }
-    
-    $page->add_breadcrumb_item($lang->rpgmaps, 'index.php?module=tools-rpgmaps');
-    $page->add_breadcrumb_item($lang->rpgmaps_manage_maps, 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
-    $page->add_breadcrumb_item($lang->rpgmaps_edit_map);
-    $page->output_header($lang->rpgmaps . ' - ' . $lang->rpgmaps_edit_map);
-    
-    $sub_tabs = array(
-        'overview' => array('title' => 'Overview', 'link' => 'index.php?module=tools-rpgmaps'),
-        'maps' => array('title' => 'Manage Maps', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps'),
-        'house_types' => array('title' => 'Manage House Types', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types'),
-        'pending_actions' => array('title' => 'View Pending Actions', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions')
+
+    $form_container->output_row($lang->rpgmaps_map_name . ' <em>*</em>', '', $form->generate_text_box('title', $map['title'], ['id' => 'title']), 'title');
+    $form_container->output_row($lang->rpgmaps_map_description, '', $form->generate_text_area('description', $map['description'], ['id' => 'description']), 'description');
+    $form_container->output_row($lang->rpgmaps_map_width, $lang->rpgmaps_map_size_desc, $form->generate_numeric_field('width', (int)$map['width'], ['id' => 'width', 'min' => 1]), 'width');
+    $form_container->output_row($lang->rpgmaps_map_height, $lang->rpgmaps_map_size_desc, $form->generate_numeric_field('height', (int)$map['height'], ['id' => 'height', 'min' => 1]), 'height');
+    $form_container->output_row($lang->rpgmaps_map_scale, '', $form->generate_numeric_field('scale_factor', (float)$map['scale_factor'], ['id' => 'scale_factor', 'step' => '0.1', 'min' => '0.1']), 'scale_factor');
+    $form_container->output_row(
+        $edit ? $lang->rpgmaps_new_image : $lang->rpgmaps_map_image,
+        $edit ? $lang->rpgmaps_new_image_desc : $lang->rpgmaps_image_desc,
+        $form->generate_file_upload_box('map_image', ['id' => 'map_image']),
+        'map_image'
     );
-    $page->output_nav_tabs($sub_tabs, 'maps');
-    
-    if ($mybb->request_method == 'post') {
-        rpgmaps_acp_verify_key();
-
-        // Handle file upload (Endung, MIME-Typ und Größe laut Settings)
-        $filename = rpgmaps_acp_handle_upload('map_image', 'map', $map['filename'], 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_edit&id=' . $map_id);
-
-        $map_data = array(
-            'title' => $db->escape_string($mybb->get_input('title')),
-            'description' => $db->escape_string($mybb->get_input('description')),
-            'width' => $mybb->get_input('width', MyBB::INPUT_INT),
-            'height' => $mybb->get_input('height', MyBB::INPUT_INT),
-            'scale_factor' => $mybb->get_input('scale_factor', MyBB::INPUT_FLOAT),
-            'filename' => $db->escape_string($filename)
-        );
-
-        $db_helper->updateMap($map_id, $map_data);
-
-        flash_message($lang->rpgmaps_map_updated, 'success');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
-    }
-    
-    $form = new Form('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_edit&id=' . $map_id, 'post', '', 1);
-    
-    $form_container = new FormContainer($lang->rpgmaps_edit_map);
-    
-    // Show current map image if exists
-    if (!empty($map['filename']) && $map['filename'] != 'placeholder.png') {
-        $current_image = '<img src="' . $mybb->settings['bburl'] . '/inc/plugins/rpgmaps/assets/maps/' . htmlspecialchars_uni($map['filename']) . '" alt="Current Map" class="rpgmaps-admin-image">';
-        $form_container->output_row('Aktuelles Kartenbild', '', $current_image);
-    }
-    
-    $form_container->output_row($lang->rpgmaps_map_name, '', $form->generate_text_box('title', $map['title'], array('id' => 'title')), 'title');
-    $form_container->output_row($lang->rpgmaps_map_description, '', $form->generate_text_area('description', $map['description'], array('id' => 'description')), 'description');
-    $form_container->output_row($lang->rpgmaps_map_width . ' (px)', '', $form->generate_numeric_field('width', $map['width'], array('id' => 'width', 'min' => 100)), 'width');
-    $form_container->output_row($lang->rpgmaps_map_height . ' (px)', '', $form->generate_numeric_field('height', $map['height'], array('id' => 'height', 'min' => 100)), 'height');
-    $form_container->output_row('Skalierungsfaktor', '', $form->generate_numeric_field('scale_factor', $map['scale_factor'], array('id' => 'scale_factor', 'step' => '0.1')), 'scale_factor');
-    $form_container->output_row('Neues Kartenbild (optional)', 'Lasse dies leer, um das aktuelle Bild beizubehalten', $form->generate_file_upload_box('map_image', array('id' => 'map_image')), 'map_image');
     $form_container->end();
-    
-    $buttons[] = $form->generate_submit_button($lang->rpgmaps_save);
-    $form->output_submit_wrapper($buttons);
+
+    $form->output_submit_wrapper([$form->generate_submit_button($lang->rpgmaps_save)]);
     $form->end();
-    
+
     $page->output_footer();
 }
 
 /**
- * Delete map
+ * Karte löschen (Bestätigungsseite → POST)
  */
 function rpgmaps_admin_maps_delete()
 {
-    global $mybb, $db, $lang, $page;
-    
-    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
+    global $mybb, $page, $lang;
+
     $db_helper = new RPGMapsDatabase();
-    
     $map_id = $mybb->get_input('id', MyBB::INPUT_INT);
-    
-    if ($mybb->request_method == 'post') {
-        rpgmaps_acp_verify_key();
-        $db_helper->deleteMap($map_id);
-        flash_message($lang->rpgmaps_map_deleted, 'success');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
-    } else {
-        $page->output_confirm_action('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_delete&id=' . $map_id, $lang->rpgmaps_confirm_delete);
+    $map = $db_helper->getMapById($map_id);
+
+    if (!$map) {
+        flash_message($lang->rpgmaps_map_not_found, 'error');
+        admin_redirect(rpgmaps_acp_url('maps'));
     }
+
+    if ($mybb->get_input('no')) {
+        admin_redirect(rpgmaps_acp_url('maps'));
+    }
+
+    if ($mybb->request_method === 'post') {
+        rpgmaps_acp_verify_key();
+
+        $db_helper->deleteMap($map_id);
+        if ($map['filename'] !== 'placeholder.png') {
+            RPGMapsAsset::deleteFile($map['filename'], 'map');
+        }
+
+        flash_message($lang->rpgmaps_map_deleted, 'success');
+        admin_redirect(rpgmaps_acp_url('maps'));
+    }
+
+    $page->output_confirm_action(rpgmaps_acp_url('maps_delete', ['id' => $map_id]), $lang->sprintf($lang->rpgmaps_confirm_delete_map, htmlspecialchars_uni($map['title'])));
 }
 
+// ============ BUILD PLOTS ============
+
 /**
- * Build plots management
+ * Bauplätze einer Karte
  */
 function rpgmaps_admin_buildplots()
 {
-    global $mybb, $db, $lang, $page;
-    
-    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
+    global $mybb, $page, $lang;
+
     $db_helper = new RPGMapsDatabase();
-    
     $map_id = $mybb->get_input('map_id', MyBB::INPUT_INT);
     $map = $db_helper->getMapById($map_id);
-    
+
     if (!$map) {
-        flash_message('Map not found', 'error');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
+        flash_message($lang->rpgmaps_map_not_found, 'error');
+        admin_redirect(rpgmaps_acp_url('maps'));
     }
-    
-    $page->add_breadcrumb_item($lang->rpgmaps, 'index.php?module=tools-rpgmaps');
-    $page->add_breadcrumb_item($lang->rpgmaps_manage_maps, 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
-    $page->add_breadcrumb_item('Bauplätze - ' . htmlspecialchars_uni($map['title']));
-    $page->output_header($lang->rpgmaps . ' - Bauplätze');
-    
-    $sub_tabs = array(
-        'overview' => array('title' => 'Overview', 'link' => 'index.php?module=tools-rpgmaps'),
-        'maps' => array('title' => 'Manage Maps', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps'),
-        'house_types' => array('title' => 'Manage House Types', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types'),
-        'pending_actions' => array('title' => 'View Pending Actions', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions')
-    );
-    $page->output_nav_tabs($sub_tabs, 'maps');
+
+    $map_title = htmlspecialchars_uni($map['title']);
+    $heading = $lang->sprintf($lang->rpgmaps_plots_of_map, $map_title);
+    rpgmaps_acp_header($lang->rpgmaps_manage_plots, 'maps', [
+        $lang->rpgmaps_manage_maps => rpgmaps_acp_url('maps'),
+        $heading => '',
+    ]);
+
+    $plots = $db_helper->getPlotsByMap($map_id);
+    usort($plots, function ($a, $b) {
+        $cmp = (int)$b['created_at'] <=> (int)$a['created_at'];
+
+        return $cmp !== 0 ? $cmp : (int)$b['id'] <=> (int)$a['id'];
+    });
 
     $table = new Table;
-    $table->construct_cell('<a href="index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots_add&map_id=' . (int)$map['id'] . '">Neuen Bauplatz hinzufügen</a>');
-    $table->construct_row();
-    $table->output('Actions');
-    
-    $plots = $db_helper->getPlotsByMap($map_id);
+    $table->construct_header($lang->rpgmaps_plot_key);
+    $table->construct_header($lang->rpgmaps_plot_position, ['width' => '25%', 'class' => 'align_center']);
+    $table->construct_header($lang->rpgmaps_status, ['width' => '15%', 'class' => 'align_center']);
+    $table->construct_header($lang->rpgmaps_controls, ['width' => '10%', 'class' => 'align_center']);
 
-    if (!empty($plots)) {
-        usort($plots, function ($a, $b) {
-            $a_created = isset($a['created_at']) ? (int)$a['created_at'] : 0;
-            $b_created = isset($b['created_at']) ? (int)$b['created_at'] : 0;
-
-            if ($a_created !== $b_created) {
-                return ($a_created < $b_created) ? 1 : -1;
-            }
-
-            $a_id = isset($a['id']) ? (int)$a['id'] : 0;
-            $b_id = isset($b['id']) ? (int)$b['id'] : 0;
-
-            if ($a_id === $b_id) {
-                return 0;
-            }
-
-            return ($a_id < $b_id) ? 1 : -1;
-        });
-    }
-    
-    $form_container = new FormContainer('Bauplätze - ' . htmlspecialchars_uni($map['title']));
-    $form_container->output_row_header('Key');
-    $form_container->output_row_header('Position');
-    $form_container->output_row_header('Status');
-    $form_container->output_row_header('Actions');
-    
     if (empty($plots)) {
-        $form_container->output_cell('Keine Bauplätze vorhanden', array('colspan' => 4));
-        $form_container->construct_row();
-    } else {
-        foreach ($plots as $plot) {
-            $form_container->output_cell(htmlspecialchars_uni($plot['plot_key']));
-            $form_container->output_cell('(' . (int)$plot['x'] . ',' . (int)$plot['y'] . ') ' . (int)$plot['w'] . 'x' . (int)$plot['h']);
-            $form_container->output_cell(htmlspecialchars_uni($plot['status']));
-            
-            $popup = new PopupMenu('plot_' . $plot['id'], 'Options');
-            $popup->add_item('Edit', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots_edit&id=' . (int)$plot['id']);
-            $popup->add_item('Delete', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots_delete&id=' . (int)$plot['id'] . '&my_post_key=' . $mybb->post_code, 'return confirm(\'' . $lang->rpgmaps_confirm_delete . '\');');
-            
-            $form_container->output_cell($popup->fetch());
-            $form_container->construct_row();
-        }
+        $table->construct_cell($lang->rpgmaps_no_plots, ['colspan' => 4]);
+        $table->construct_row();
     }
-    
-    $form_container->end();
-    
+
+    foreach ($plots as $plot) {
+        $id = (int)$plot['id'];
+        $status_key = 'rpgmaps_plot_status_' . $plot['status'];
+        $label = trim((string)$plot['tooltip_text']) !== '' ? ' <span class="smalltext">(' . htmlspecialchars_uni($plot['tooltip_text']) . ')</span>' : '';
+
+        $table->construct_cell(htmlspecialchars_uni($plot['plot_key']) . $label);
+        $table->construct_cell('X ' . (int)$plot['x'] . ' / Y ' . (int)$plot['y'] . ' &middot; ' . (int)$plot['w'] . ' × ' . (int)$plot['h'], ['class' => 'align_center']);
+        $table->construct_cell(isset($lang->$status_key) ? $lang->$status_key : htmlspecialchars_uni($plot['status']), ['class' => 'align_center']);
+        $table->construct_cell(rpgmaps_acp_popup('plot_' . $id, [
+            $lang->rpgmaps_edit   => rpgmaps_acp_url('buildplots_edit', ['id' => $id]),
+            $lang->rpgmaps_delete => [
+                rpgmaps_acp_url('buildplots_delete', ['id' => $id, 'my_post_key' => $mybb->post_code]),
+                rpgmaps_acp_confirm_js($lang->rpgmaps_confirm_delete_plot),
+            ],
+        ]), ['class' => 'align_center']);
+        $table->construct_row();
+    }
+
+    $table->output($heading . ' &mdash; <a href="' . rpgmaps_acp_url('buildplots_add', ['map_id' => $map_id]) . '">' . $lang->rpgmaps_add_plot . '</a>');
+
     $page->output_footer();
 }
 
 /**
- * Add build plot
+ * Bauplatz anlegen/bearbeiten
+ *
+ * @param bool $edit
  */
-function rpgmaps_admin_buildplots_add()
+function rpgmaps_admin_buildplots_form($edit)
 {
-    global $mybb, $db, $lang, $page;
-    
-    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
+    global $mybb, $db, $page, $lang;
+
     $db_helper = new RPGMapsDatabase();
-    
-    $map_id = $mybb->get_input('map_id', MyBB::INPUT_INT);
-    $map = $db_helper->getMapById($map_id);
-    
-    if (!$map) {
-        flash_message('Map not found', 'error');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
+
+    if ($edit) {
+        $plot_id = $mybb->get_input('id', MyBB::INPUT_INT);
+        $plot = $db_helper->getPlotById($plot_id);
+        if (!$plot) {
+            flash_message($lang->rpgmaps_plot_not_found, 'error');
+            admin_redirect(rpgmaps_acp_url('maps'));
+        }
+        $map_id = (int)$plot['map_id'];
+        $self_url = rpgmaps_acp_url('buildplots_edit', ['id' => $plot_id]);
+    } else {
+        $plot_id = 0;
+        $map_id = $mybb->get_input('map_id', MyBB::INPUT_INT);
+        $plot = ['plot_key' => '', 'x' => 0, 'y' => 0, 'w' => 50, 'h' => 50, 'rotation' => 0, 'tooltip_text' => ''];
+        $self_url = rpgmaps_acp_url('buildplots_add', ['map_id' => $map_id]);
     }
-    
-    $page->add_breadcrumb_item($lang->rpgmaps, 'index.php?module=tools-rpgmaps');
-    $page->add_breadcrumb_item($lang->rpgmaps_manage_maps, 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
-    $page->add_breadcrumb_item('Bauplätze', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots&map_id=' . $map_id);
-    $page->add_breadcrumb_item('Neuen Bauplatz hinzufügen');
-    $page->output_header($lang->rpgmaps . ' - Neuen Bauplatz hinzufügen');
-    
-    $sub_tabs = array(
-        'overview' => array('title' => 'Overview', 'link' => 'index.php?module=tools-rpgmaps'),
-        'maps' => array('title' => 'Manage Maps', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps'),
-        'house_types' => array('title' => 'Manage House Types', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types'),
-        'pending_actions' => array('title' => 'View Pending Actions', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions')
-    );
-    $page->output_nav_tabs($sub_tabs, 'maps');
-    
-    if ($mybb->request_method == 'post') {
+
+    $map = $db_helper->getMapById($map_id);
+    if (!$map) {
+        flash_message($lang->rpgmaps_map_not_found, 'error');
+        admin_redirect(rpgmaps_acp_url('maps'));
+    }
+    $list_url = rpgmaps_acp_url('buildplots', ['map_id' => $map_id]);
+
+    if ($mybb->request_method === 'post') {
         rpgmaps_acp_verify_key();
 
         $plot_key = trim($mybb->get_input('plot_key'));
-
-        // Auto-generate plot_key if not provided
-        if (empty($plot_key)) {
-            $plot_key = 'plot_' . time() . '_' . mt_rand(1000, 9999);
+        if ($plot_key === '') {
+            $plot_key = $edit ? (string)$plot['plot_key'] : 'plot_' . TIME_NOW . '_' . my_rand(1000, 9999);
         }
 
-        // Get and normalize rotation value (0-360)
-        $rotation = $mybb->get_input('rotation', MyBB::INPUT_INT);
-        $rotation = $rotation % 360;
-        if ($rotation < 0) {
-            $rotation += 360;
+        $data = [
+            'plot_key'     => $db->escape_string(my_substr($plot_key, 0, 100)),
+            'x'            => max(0, $mybb->get_input('x', MyBB::INPUT_INT)),
+            'y'            => max(0, $mybb->get_input('y', MyBB::INPUT_INT)),
+            'w'            => rpgmaps_acp_plot_size($mybb->get_input('w', MyBB::INPUT_INT)),
+            'h'            => rpgmaps_acp_plot_size($mybb->get_input('h', MyBB::INPUT_INT)),
+            'rotation'     => rpgmaps_acp_rotation($mybb->get_input('rotation', MyBB::INPUT_INT)),
+            'tooltip_text' => $db->escape_string(my_substr($mybb->get_input('tooltip_text'), 0, 255)),
+        ];
+
+        if ($edit) {
+            $db_helper->updatePlot($plot_id, $data);
+            flash_message($lang->rpgmaps_plot_updated, 'success');
+        } else {
+            $data['map_id'] = $map_id;
+            $data['status'] = 'free';
+            $db_helper->insertPlot($data);
+            flash_message($lang->rpgmaps_plot_added, 'success');
         }
-
-        $plot_data = array(
-            'map_id' => $map_id,
-            'plot_key' => $db->escape_string($plot_key),
-            'x' => $mybb->get_input('x', MyBB::INPUT_INT),
-            'y' => $mybb->get_input('y', MyBB::INPUT_INT),
-            'w' => rpgmaps_acp_plot_size($mybb->get_input('w', MyBB::INPUT_INT)),
-            'h' => rpgmaps_acp_plot_size($mybb->get_input('h', MyBB::INPUT_INT)),
-            'rotation' => $rotation,
-            'tooltip_text' => $db->escape_string($mybb->get_input('tooltip_text')),
-            'status' => 'free'
-        );
-
-        $plot_id = $db_helper->insertPlot($plot_data);
-
-        flash_message('Bauplatz wurde erfolgreich hinzugefügt', 'success');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots&map_id=' . $map_id);
+        admin_redirect($list_url);
     }
 
-    $form = new Form('index.php?module=tools-rpgmaps&action=rpgmaps', 'post', '', 1);
-    echo $form->generate_hidden_field('sub', 'buildplots_add');
-    echo $form->generate_hidden_field('map_id', $map_id);
-    
-    $form_container = new FormContainer('Neuen Bauplatz hinzufügen');
-    $form_container->output_row('Plot Key <em>(Optional)</em>', 'Wird automatisch generiert, wenn leer gelassen', $form->generate_text_box('plot_key', '', array('id' => 'plot_key', 'placeholder' => 'z.B. plot_1 oder leer lassen für Auto-Generierung')), 'plot_key');
-    $form_container->output_row('X-Koordinate', '', $form->generate_numeric_field('x', '0', array('id' => 'x', 'min' => 0)), 'x');
-    $form_container->output_row('Y-Koordinate', '', $form->generate_numeric_field('y', '0', array('id' => 'y', 'min' => 0)), 'y');
-    $form_container->output_row('Breite', '', $form->generate_numeric_field('w', '50', array('id' => 'w', 'min' => 10)), 'w');
-    $form_container->output_row('Höhe', '', $form->generate_numeric_field('h', '50', array('id' => 'h', 'min' => 10)), 'h');
-    $form_container->output_row('Rotation (Grad)', 'Winkel zwischen 0 und 360 Grad', $form->generate_numeric_field('rotation', '0', array('id' => 'rotation', 'min' => 0, 'max' => 360)), 'rotation');
-    $form_container->output_row('Tooltip-Text', '', $form->generate_text_box('tooltip_text', '', array('id' => 'tooltip_text')), 'tooltip_text');
+    $title = $edit ? $lang->rpgmaps_edit_plot : $lang->rpgmaps_add_plot;
+    rpgmaps_acp_header($title, 'maps', [
+        $lang->rpgmaps_manage_maps => rpgmaps_acp_url('maps'),
+        $lang->sprintf($lang->rpgmaps_plots_of_map, htmlspecialchars_uni($map['title'])) => $list_url,
+        $title => '',
+    ]);
+
+    $form = new Form($self_url, 'post');
+    $form_container = new FormContainer($title);
+    $form_container->output_row($lang->rpgmaps_plot_key, $edit ? '' : $lang->rpgmaps_plot_key_desc, $form->generate_text_box('plot_key', $plot['plot_key'], ['id' => 'plot_key']), 'plot_key');
+    $form_container->output_row($lang->rpgmaps_plot_x, $lang->rpgmaps_plot_coords_desc, $form->generate_numeric_field('x', (int)$plot['x'], ['id' => 'x', 'min' => 0]), 'x');
+    $form_container->output_row($lang->rpgmaps_plot_y, $lang->rpgmaps_plot_coords_desc, $form->generate_numeric_field('y', (int)$plot['y'], ['id' => 'y', 'min' => 0]), 'y');
+    $form_container->output_row($lang->rpgmaps_plot_w, '', $form->generate_numeric_field('w', (int)$plot['w'], ['id' => 'w', 'min' => 1]), 'w');
+    $form_container->output_row($lang->rpgmaps_plot_h, '', $form->generate_numeric_field('h', (int)$plot['h'], ['id' => 'h', 'min' => 1]), 'h');
+    $form_container->output_row($lang->rpgmaps_plot_rotation, $lang->rpgmaps_plot_rotation_desc, $form->generate_numeric_field('rotation', (int)($plot['rotation'] ?? 0), ['id' => 'rotation', 'min' => 0, 'max' => 359]), 'rotation');
+    $form_container->output_row($lang->rpgmaps_plot_tooltip, $lang->rpgmaps_plot_tooltip_desc, $form->generate_text_box('tooltip_text', $plot['tooltip_text'], ['id' => 'tooltip_text']), 'tooltip_text');
     $form_container->end();
-    
-    $buttons[] = $form->generate_submit_button('Speichern');
-    $form->output_submit_wrapper($buttons);
+
+    $form->output_submit_wrapper([$form->generate_submit_button($lang->rpgmaps_save)]);
     $form->end();
-    
+
     $page->output_footer();
 }
 
 /**
- * Edit build plot
- */
-function rpgmaps_admin_buildplots_edit()
-{
-    global $mybb, $db, $lang, $page;
-    
-    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
-    $db_helper = new RPGMapsDatabase();
-    
-    rpgmaps_acp_verify_key();
-
-    $plot_id = $mybb->get_input('id', MyBB::INPUT_INT);
-    $plot = $db_helper->getPlotById($plot_id);
-    
-    if (!$plot) {
-        flash_message('Plot not found', 'error');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
-    }
-    
-    $map = $db_helper->getMapById($plot['map_id']);
-    
-    $page->add_breadcrumb_item($lang->rpgmaps, 'index.php?module=tools-rpgmaps');
-    $page->add_breadcrumb_item($lang->rpgmaps_manage_maps, 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
-    $page->add_breadcrumb_item('Bauplätze', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots&map_id=' . $plot['map_id']);
-    $page->add_breadcrumb_item('Bauplatz bearbeiten');
-    $page->output_header($lang->rpgmaps . ' - Bauplatz bearbeiten');
-    
-    $sub_tabs = array(
-        'overview' => array('title' => 'Overview', 'link' => 'index.php?module=tools-rpgmaps'),
-        'maps' => array('title' => 'Manage Maps', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps'),
-        'house_types' => array('title' => 'Manage House Types', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types'),
-        'pending_actions' => array('title' => 'View Pending Actions', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions')
-    );
-    $page->output_nav_tabs($sub_tabs, 'maps');
-    
-    if ($mybb->request_method == 'post') {
-        rpgmaps_acp_verify_key();
-
-        // Get and normalize rotation value (0-360)
-        $rotation = $mybb->get_input('rotation', MyBB::INPUT_INT);
-        $rotation = $rotation % 360;
-        if ($rotation < 0) {
-            $rotation += 360;
-        }
-
-        $plot_data = array(
-            'plot_key' => $db->escape_string($mybb->get_input('plot_key')),
-            'x' => $mybb->get_input('x', MyBB::INPUT_INT),
-            'y' => $mybb->get_input('y', MyBB::INPUT_INT),
-            'w' => rpgmaps_acp_plot_size($mybb->get_input('w', MyBB::INPUT_INT)),
-            'h' => rpgmaps_acp_plot_size($mybb->get_input('h', MyBB::INPUT_INT)),
-            'rotation' => $rotation,
-            'tooltip_text' => $db->escape_string($mybb->get_input('tooltip_text'))
-        );
-
-        $db_helper->updatePlot($plot_id, $plot_data);
-
-        flash_message('Bauplatz wurde erfolgreich aktualisiert', 'success');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots&map_id=' . $plot['map_id']);
-    }
-
-    $form = new Form('index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots_edit&id=' . $plot_id, 'post', '', 1);
-    
-    $form_container = new FormContainer('Bauplatz bearbeiten');
-    $form_container->output_row('Plot Key', '', $form->generate_text_box('plot_key', $plot['plot_key'], array('id' => 'plot_key')), 'plot_key');
-    $form_container->output_row('X-Koordinate', '', $form->generate_numeric_field('x', $plot['x'], array('id' => 'x', 'min' => 0)), 'x');
-    $form_container->output_row('Y-Koordinate', '', $form->generate_numeric_field('y', $plot['y'], array('id' => 'y', 'min' => 0)), 'y');
-    $form_container->output_row('Breite', '', $form->generate_numeric_field('w', $plot['w'], array('id' => 'w', 'min' => 10)), 'w');
-    $form_container->output_row('Höhe', '', $form->generate_numeric_field('h', $plot['h'], array('id' => 'h', 'min' => 10)), 'h');
-    $form_container->output_row('Rotation (Grad)', 'Winkel zwischen 0 und 360 Grad', $form->generate_numeric_field('rotation', isset($plot['rotation']) ? $plot['rotation'] : 0, array('id' => 'rotation', 'min' => 0, 'max' => 360)), 'rotation');
-    $form_container->output_row('Tooltip-Text', '', $form->generate_text_box('tooltip_text', $plot['tooltip_text'], array('id' => 'tooltip_text')), 'tooltip_text');
-    $form_container->end();
-    
-    $buttons[] = $form->generate_submit_button('Speichern');
-    $form->output_submit_wrapper($buttons);
-    $form->end();
-    
-    $page->output_footer();
-}
-
-/**
- * Delete build plot
+ * Bauplatz löschen (Popup-Link mit my_post_key)
  */
 function rpgmaps_admin_buildplots_delete()
 {
-    global $mybb, $db, $lang;
-    
-    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
+    global $mybb, $lang;
+
+    rpgmaps_acp_verify_key();
+
     $db_helper = new RPGMapsDatabase();
-    
-    $plot_id = $mybb->get_input('id', MyBB::INPUT_INT);
-    $plot = $db_helper->getPlotById($plot_id);
-    
+    $plot = $db_helper->getPlotById($mybb->get_input('id', MyBB::INPUT_INT));
+
     if (!$plot) {
-        echo 'Plot not found';
-        return;
+        flash_message($lang->rpgmaps_plot_not_found, 'error');
+        admin_redirect(rpgmaps_acp_url('maps'));
     }
-    
-    $db_helper->deletePlot($plot_id);
-    
-    echo '<p>' . $lang->rpgmaps_success . '</p>';
-    echo '<p><a href="index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots&map_id=' . (int)$plot['map_id'] . '">Back to Plots</a></p>';
+
+    $db_helper->deletePlot((int)$plot['id']);
+
+    flash_message($lang->rpgmaps_plot_deleted, 'success');
+    admin_redirect(rpgmaps_acp_url('buildplots', ['map_id' => (int)$plot['map_id']]));
 }
 
+// ============ HOUSE TYPES ============
+
 /**
- * House types management
+ * Haustypen
  */
 function rpgmaps_admin_house_types()
 {
-    global $mybb, $db, $lang, $page;
-    
-    $page->add_breadcrumb_item($lang->rpgmaps, 'index.php?module=tools-rpgmaps');
-    $page->add_breadcrumb_item($lang->rpgmaps_manage_house_types);
-    $page->output_header($lang->rpgmaps . ' - ' . $lang->rpgmaps_manage_house_types);
-    
-    $sub_tabs = array(
-        'overview' => array('title' => 'Overview', 'link' => 'index.php?module=tools-rpgmaps'),
-        'maps' => array('title' => 'Manage Maps', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps'),
-        'house_types' => array('title' => 'Manage House Types', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types'),
-        'pending_actions' => array('title' => 'View Pending Actions', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions')
-    );
-    $page->output_nav_tabs($sub_tabs, 'house_types');
-    
-    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
+    global $mybb, $page, $lang;
+
     $db_helper = new RPGMapsDatabase();
-    
-    $house_types = $db_helper->getHouseTypes();
-    
-    $form_container = new FormContainer($lang->rpgmaps_manage_house_types);
-    $form_container->output_row_header('Name');
-    $form_container->output_row_header('Created');
-    $form_container->output_row_header('Actions');
-    
-    if (empty($house_types)) {
-        $form_container->output_cell($lang->rpgmaps_no_house_types, array('colspan' => 3));
-        $form_container->construct_row();
-    } else {
-        foreach ($house_types as $type) {
-            $form_container->output_cell(htmlspecialchars_uni($type['name']));
-            $form_container->output_cell(date('Y-m-d', $type['created_at']));
-            
-            $popup = new PopupMenu('type_' . $type['id'], 'Options');
-            $popup->add_item('Edit', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_edit&id=' . (int)$type['id']);
-            $popup->add_item('Delete', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_delete&id=' . (int)$type['id'] . '&my_post_key=' . $mybb->post_code, 'return confirm(\'' . $lang->rpgmaps_confirm_delete . '\');');
-            
-            $form_container->output_cell($popup->fetch());
-            $form_container->construct_row();
+
+    rpgmaps_acp_header($lang->rpgmaps_manage_house_types, 'house_types', [$lang->rpgmaps_manage_house_types => '']);
+
+    $table = new Table;
+    $table->construct_header($lang->rpgmaps_house_type_image, ['width' => '10%', 'class' => 'align_center']);
+    $table->construct_header($lang->rpgmaps_house_type_name);
+    $table->construct_header($lang->rpgmaps_created, ['width' => '15%', 'class' => 'align_center']);
+    $table->construct_header($lang->rpgmaps_controls, ['width' => '10%', 'class' => 'align_center']);
+
+    $types = $db_helper->getHouseTypes();
+    if (empty($types)) {
+        $table->construct_cell($lang->rpgmaps_no_house_types, ['colspan' => 4]);
+        $table->construct_row();
+    }
+
+    foreach ($types as $type) {
+        $id = (int)$type['id'];
+        $image = $type['asset_filename'] !== '' && $type['asset_filename'] !== 'placeholder.png'
+            ? '<img src="' . htmlspecialchars_uni($mybb->settings['bburl']) . '/inc/plugins/rpgmaps/assets/houses/' . htmlspecialchars_uni($type['asset_filename']) . '" alt="" style="max-width: 48px; max-height: 48px;" />'
+            : '&ndash;';
+
+        $table->construct_cell($image, ['class' => 'align_center']);
+        $table->construct_cell('<strong>' . htmlspecialchars_uni($type['name']) . '</strong>');
+        $table->construct_cell(my_date('relative', (int)$type['created_at']), ['class' => 'align_center']);
+        $table->construct_cell(rpgmaps_acp_popup('type_' . $id, [
+            $lang->rpgmaps_edit   => rpgmaps_acp_url('house_types_edit', ['id' => $id]),
+            $lang->rpgmaps_delete => [
+                rpgmaps_acp_url('house_types_delete', ['id' => $id, 'my_post_key' => $mybb->post_code]),
+                rpgmaps_acp_confirm_js($lang->rpgmaps_confirm_delete_house_type),
+            ],
+        ]), ['class' => 'align_center']);
+        $table->construct_row();
+    }
+
+    $table->output($lang->rpgmaps_manage_house_types . ' &mdash; <a href="' . rpgmaps_acp_url('house_types_add') . '">' . $lang->rpgmaps_add_house_type . '</a>');
+
+    $page->output_footer();
+}
+
+/**
+ * Haustyp anlegen/bearbeiten
+ *
+ * @param bool $edit
+ */
+function rpgmaps_admin_house_types_form($edit)
+{
+    global $mybb, $db, $page, $lang;
+
+    $db_helper = new RPGMapsDatabase();
+    $type_id = $mybb->get_input('id', MyBB::INPUT_INT);
+    $type = ['name' => '', 'description' => '', 'icon_scale' => 1.0, 'asset_filename' => 'placeholder.png'];
+
+    if ($edit) {
+        $type = $db_helper->getHouseTypeById($type_id);
+        if (!$type) {
+            flash_message($lang->rpgmaps_house_type_not_found, 'error');
+            admin_redirect(rpgmaps_acp_url('house_types'));
         }
     }
-    
-    $form_container->end();
-    
-    $table = new Table;
-    $table->construct_cell('<a href="index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_add">' . $lang->rpgmaps_add_house_type . '</a>');
-    $table->construct_row();
-    $table->output('Actions');
-    
-    $page->output_footer();
-}
 
-/**
- * Add house type
- */
-function rpgmaps_admin_house_types_add()
-{
-    global $mybb, $db, $lang, $page;
-    
-    $page->add_breadcrumb_item($lang->rpgmaps, 'index.php?module=tools-rpgmaps');
-    $page->add_breadcrumb_item($lang->rpgmaps_manage_house_types, 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types');
-    $page->add_breadcrumb_item($lang->rpgmaps_add_house_type);
-    $page->output_header($lang->rpgmaps . ' - ' . $lang->rpgmaps_add_house_type);
-    
-    $sub_tabs = array(
-        'overview' => array('title' => 'Overview', 'link' => 'index.php?module=tools-rpgmaps'),
-        'maps' => array('title' => 'Manage Maps', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps'),
-        'house_types' => array('title' => 'Manage House Types', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types'),
-        'pending_actions' => array('title' => 'View Pending Actions', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions')
-    );
-    $page->output_nav_tabs($sub_tabs, 'house_types');
-    
-    if ($mybb->request_method == 'post') {
+    $self_url = $edit ? rpgmaps_acp_url('house_types_edit', ['id' => $type_id]) : rpgmaps_acp_url('house_types_add');
+
+    if ($mybb->request_method === 'post') {
         rpgmaps_acp_verify_key();
 
-        require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
-        $db_helper = new RPGMapsDatabase();
+        $name = trim($mybb->get_input('name'));
+        if ($name === '') {
+            flash_message($lang->rpgmaps_error_name_required, 'error');
+            admin_redirect($self_url);
+        }
 
-        // Handle file upload (Endung, MIME-Typ und Größe laut Settings)
-        $filename = rpgmaps_acp_handle_upload('house_image', 'house', 'placeholder.png', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_add');
+        $filename = rpgmaps_acp_handle_upload('house_image', 'house', (string)$type['asset_filename'], $self_url);
 
-        $type_data = array(
-            'name' => $db->escape_string($mybb->get_input('name')),
-            'description' => $db->escape_string($mybb->get_input('description')),
+        $data = [
+            'name'           => $db->escape_string(my_substr($name, 0, 100)),
+            'description'    => $db->escape_string($mybb->get_input('description')),
+            'icon_scale'     => $mybb->get_input('icon_scale', MyBB::INPUT_FLOAT) ?: 1.0,
             'asset_filename' => $db->escape_string($filename),
-            'icon_scale' => $mybb->get_input('icon_scale', MyBB::INPUT_FLOAT)
-        );
+        ];
 
-        $type_id = $db_helper->createHouseType($type_data);
-
-        flash_message($lang->rpgmaps_house_type_added, 'success');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types');
+        if ($edit) {
+            $db_helper->updateHouseType($type_id, $data);
+            flash_message($lang->rpgmaps_house_type_updated, 'success');
+        } else {
+            $db_helper->createHouseType($data);
+            flash_message($lang->rpgmaps_house_type_added, 'success');
+        }
+        admin_redirect(rpgmaps_acp_url('house_types'));
     }
-    
-    $form = new Form('index.php?module=tools-rpgmaps&action=rpgmaps', 'post', '', 1);
-    echo $form->generate_hidden_field('sub', 'house_types_add');
-    
-    $form_container = new FormContainer($lang->rpgmaps_add_house_type);
-    $form_container->output_row('Name', '', $form->generate_text_box('name', '', array('id' => 'name')), 'name');
-    $form_container->output_row($lang->rpgmaps_house_type_description, '', $form->generate_text_area('description', '', array('id' => 'description')), 'description');
-    $form_container->output_row('Bilddatei', '', $form->generate_file_upload_box('house_image', array('id' => 'house_image')), 'house_image');
-    $form_container->output_row('Icon-Skalierung', '', $form->generate_numeric_field('icon_scale', '1.0', array('id' => 'icon_scale', 'step' => '0.1')), 'icon_scale');
-    $form_container->end();
-    
-    $buttons[] = $form->generate_submit_button($lang->rpgmaps_save);
-    $form->output_submit_wrapper($buttons);
-    $form->end();
-    
-    $page->output_footer();
-}
 
-/**
- * Edit house type
- */
-function rpgmaps_admin_house_types_edit()
-{
-    global $mybb, $db, $lang, $page;
-    
-    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
-    $db_helper = new RPGMapsDatabase();
-    
-    $type_id = $mybb->get_input('id', MyBB::INPUT_INT);
-    $type = $db_helper->getHouseTypeById($type_id);
-    
-    if (!$type) {
-        flash_message('House type not found', 'error');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types');
+    $title = $edit ? $lang->rpgmaps_edit_house_type : $lang->rpgmaps_add_house_type;
+    rpgmaps_acp_header($title, 'house_types', [$lang->rpgmaps_manage_house_types => rpgmaps_acp_url('house_types'), $title => '']);
+
+    $form = new Form($self_url, 'post', '', 1);
+    $form_container = new FormContainer($title);
+
+    if ($edit && $type['asset_filename'] !== '' && $type['asset_filename'] !== 'placeholder.png') {
+        $form_container->output_row($lang->rpgmaps_current_image, '', '<img src="' . htmlspecialchars_uni($mybb->settings['bburl']) . '/inc/plugins/rpgmaps/assets/houses/' . htmlspecialchars_uni($type['asset_filename']) . '" alt="" style="max-width: 150px; max-height: 150px;" />');
     }
-    
-    $page->add_breadcrumb_item($lang->rpgmaps, 'index.php?module=tools-rpgmaps');
-    $page->add_breadcrumb_item($lang->rpgmaps_manage_house_types, 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types');
-    $page->add_breadcrumb_item($lang->rpgmaps_edit_house_type);
-    $page->output_header($lang->rpgmaps . ' - ' . $lang->rpgmaps_edit_house_type);
-    
-    $sub_tabs = array(
-        'overview' => array('title' => 'Overview', 'link' => 'index.php?module=tools-rpgmaps'),
-        'maps' => array('title' => 'Manage Maps', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps'),
-        'house_types' => array('title' => 'Manage House Types', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types'),
-        'pending_actions' => array('title' => 'View Pending Actions', 'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions')
+
+    $form_container->output_row($lang->rpgmaps_house_type_name . ' <em>*</em>', '', $form->generate_text_box('name', $type['name'], ['id' => 'name']), 'name');
+    $form_container->output_row($lang->rpgmaps_house_type_description, '', $form->generate_text_area('description', $type['description'], ['id' => 'description']), 'description');
+    $form_container->output_row(
+        $edit ? $lang->rpgmaps_new_image : $lang->rpgmaps_house_type_image,
+        $edit ? $lang->rpgmaps_new_image_desc : $lang->rpgmaps_image_desc,
+        $form->generate_file_upload_box('house_image', ['id' => 'house_image']),
+        'house_image'
     );
-    $page->output_nav_tabs($sub_tabs, 'house_types');
-    
-    if ($mybb->request_method == 'post') {
-        rpgmaps_acp_verify_key();
-
-        // Handle file upload (Endung, MIME-Typ und Größe laut Settings)
-        $filename = rpgmaps_acp_handle_upload('house_image', 'house', $type['asset_filename'], 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_edit&id=' . $type_id);
-
-        $type_data = array(
-            'name' => $db->escape_string($mybb->get_input('name')),
-            'description' => $db->escape_string($mybb->get_input('description')),
-            'icon_scale' => $mybb->get_input('icon_scale', MyBB::INPUT_FLOAT),
-            'asset_filename' => $db->escape_string($filename)
-        );
-
-        $db_helper->updateHouseType($type_id, $type_data);
-
-        flash_message($lang->rpgmaps_house_type_updated, 'success');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types');
-    }
-    
-    $form = new Form('index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_edit&id=' . $type_id, 'post', '', 1);
-    
-    $form_container = new FormContainer($lang->rpgmaps_edit_house_type);
-    
-    // Show current house image if exists
-    if (!empty($type['asset_filename']) && $type['asset_filename'] != 'placeholder.png') {
-        $current_image = '<img src="' . $mybb->settings['bburl'] . '/inc/plugins/rpgmaps/assets/houses/' . htmlspecialchars_uni($type['asset_filename']) . '" alt="Current House" class="rpgmaps-house-type-image">';
-        $form_container->output_row('Aktuelles Hausbild', '', $current_image);
-    }
-    
-    $form_container->output_row('Name', '', $form->generate_text_box('name', $type['name'], array('id' => 'name')), 'name');
-    $form_container->output_row($lang->rpgmaps_house_type_description, '', $form->generate_text_area('description', $type['description'], array('id' => 'description')), 'description');
-    $form_container->output_row('Icon-Skalierung', '', $form->generate_numeric_field('icon_scale', $type['icon_scale'], array('id' => 'icon_scale', 'step' => '0.1')), 'icon_scale');
-    $form_container->output_row('Neues Hausbild (optional)', 'Lasse dies leer, um das aktuelle Bild beizubehalten', $form->generate_file_upload_box('house_image', array('id' => 'house_image')), 'house_image');
+    $form_container->output_row($lang->rpgmaps_house_type_icon_scale, '', $form->generate_numeric_field('icon_scale', (float)$type['icon_scale'], ['id' => 'icon_scale', 'step' => '0.1', 'min' => '0.1']), 'icon_scale');
     $form_container->end();
-    
-    $buttons[] = $form->generate_submit_button($lang->rpgmaps_save);
-    $form->output_submit_wrapper($buttons);
+
+    $form->output_submit_wrapper([$form->generate_submit_button($lang->rpgmaps_save)]);
     $form->end();
-    
+
     $page->output_footer();
 }
 
 /**
- * Delete house type
+ * Haustyp löschen (Popup-Link mit my_post_key)
  */
 function rpgmaps_admin_house_types_delete()
 {
-    global $mybb, $db, $lang;
-    
-    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
-    $db_helper = new RPGMapsDatabase();
-    
+    global $mybb, $lang;
+
     rpgmaps_acp_verify_key();
 
-    $type_id = $mybb->get_input('id', MyBB::INPUT_INT);
-    
-    $success = $db_helper->deleteHouseType($type_id);
-    
-    if ($success) {
-        echo '<p>' . $lang->rpgmaps_success . '</p>';
-    } else {
-        echo '<p>Cannot delete: Houses depend on this type.</p>';
+    $db_helper = new RPGMapsDatabase();
+    $type = $db_helper->getHouseTypeById($mybb->get_input('id', MyBB::INPUT_INT));
+
+    if (!$type) {
+        flash_message($lang->rpgmaps_house_type_not_found, 'error');
+        admin_redirect(rpgmaps_acp_url('house_types'));
     }
-    
-    echo '<p><a href="index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types">Back to House Types</a></p>';
+
+    if (!$db_helper->deleteHouseType((int)$type['id'])) {
+        flash_message($lang->rpgmaps_house_type_in_use, 'error');
+        admin_redirect(rpgmaps_acp_url('house_types'));
+    }
+
+    if ($type['asset_filename'] !== 'placeholder.png') {
+        RPGMapsAsset::deleteFile($type['asset_filename'], 'house');
+    }
+
+    flash_message($lang->rpgmaps_house_type_deleted, 'success');
+    admin_redirect(rpgmaps_acp_url('house_types'));
 }
 
+// ============ PENDING ACTIONS ============
+
 /**
- * Pending actions management
+ * Offene Bauanträge
  */
 function rpgmaps_admin_pending_actions()
 {
-    global $mybb, $db, $lang, $page;
-    
-    $page->add_breadcrumb_item($lang->rpgmaps, 'index.php?module=tools-rpgmaps');
-    $page->add_breadcrumb_item('Pending Actions');
-    $page->output_header($lang->rpgmaps . ' - Pending Actions');
-    
-    $sub_tabs = array(
-        'overview' => array(
-            'title' => 'Overview',
-            'link' => 'index.php?module=tools-rpgmaps',
-        ),
-        'maps' => array(
-            'title' => 'Manage Maps',
-            'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps',
-        ),
-        'house_types' => array(
-            'title' => 'Manage House Types',
-            'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types',
-        ),
-        'pending_actions' => array(
-            'title' => 'View Pending Actions',
-            'link' => 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions',
-        )
-    );
-    
-    $page->output_nav_tabs($sub_tabs, 'pending_actions');
-    
-    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
+    global $mybb, $page, $lang;
+
     $db_helper = new RPGMapsDatabase();
-    
+
+    rpgmaps_acp_header($lang->rpgmaps_manage_actions, 'pending_actions', [$lang->rpgmaps_manage_actions => '']);
+
+    $table = new Table;
+    $table->construct_header($lang->rpgmaps_action_type, ['width' => '15%']);
+    $table->construct_header($lang->rpgmaps_action_user, ['width' => '20%']);
+    $table->construct_header($lang->rpgmaps_action_target);
+    $table->construct_header($lang->rpgmaps_action_date, ['width' => '15%', 'class' => 'align_center']);
+    $table->construct_header($lang->rpgmaps_controls, ['width' => '10%', 'class' => 'align_center']);
+
     $actions = $db_helper->getPendingActions();
-    
     if (empty($actions)) {
-        $table = new Table;
-        $table->construct_cell('No pending actions.');
+        $table->construct_cell($lang->rpgmaps_no_actions, ['colspan' => 5]);
         $table->construct_row();
-        $table->output('Pending Actions');
-    } else {
-        $table = new Table;
-        $table->construct_header('Type');
-        $table->construct_header('User');
-        $table->construct_header('Target');
-        $table->construct_header('Created');
-        $table->construct_header('Actions', array('class' => 'align_center', 'width' => '20%'));
-        
-        foreach ($actions as $action) {
-            // Get user info
-            $user_query = $db->simple_select('users', 'username', 'uid = ' . (int)$action['user_id']);
-            $user = $db->fetch_array($user_query);
-            
-            $table->construct_cell(htmlspecialchars_uni($action['action_type']));
-            $table->construct_cell(htmlspecialchars_uni($user['username']));
-            $table->construct_cell((int)$action['target_id']);
-            $table->construct_cell(date('Y-m-d H:i', $action['created_at']));
-            
-            $popup = new PopupMenu('action_' . $action['id'], 'Options');
-            $popup->add_item('Approve', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=action_approve&id=' . (int)$action['id'] . '&my_post_key=' . $mybb->post_code);
-            $popup->add_item('Reject', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=action_reject&id=' . (int)$action['id'] . '&my_post_key=' . $mybb->post_code);
-            $table->construct_cell($popup->fetch(), array('class' => 'align_center'));
-            
-            $table->construct_row();
+    }
+
+    foreach ($actions as $action) {
+        $id = (int)$action['id'];
+        $user = get_user((int)$action['user_id']);
+        $username = $user ? build_profile_link(htmlspecialchars_uni($user['username']), (int)$user['uid'], '_blank') : $lang->rpgmaps_deleted_account;
+
+        $type_key = 'rpgmaps_action_' . $action['action_type'];
+        $target = '#' . (int)$action['target_id'];
+        if ($action['action_type'] === 'build') {
+            $plot = $db_helper->getPlotById((int)$action['target_id']);
+            $map = $plot ? $db_helper->getMapById((int)$plot['map_id']) : null;
+            if ($plot && $map) {
+                $target = $lang->sprintf($lang->rpgmaps_action_target_plot, htmlspecialchars_uni($map['title']), htmlspecialchars_uni($plot['plot_key']));
+            }
         }
-        
-        $table->output('Pending Actions');
+
+        $table->construct_cell(isset($lang->$type_key) ? $lang->$type_key : htmlspecialchars_uni($action['action_type']));
+        $table->construct_cell($username);
+        $table->construct_cell($target);
+        $table->construct_cell(my_date('relative', (int)$action['created_at']), ['class' => 'align_center']);
+        $table->construct_cell(rpgmaps_acp_popup('action_' . $id, [
+            $lang->rpgmaps_action_approve => rpgmaps_acp_url('action_approve', ['id' => $id, 'my_post_key' => $mybb->post_code]),
+            $lang->rpgmaps_action_reject  => [
+                rpgmaps_acp_url('action_reject', ['id' => $id, 'my_post_key' => $mybb->post_code]),
+                rpgmaps_acp_confirm_js($lang->rpgmaps_confirm_reject),
+            ],
+        ]), ['class' => 'align_center']);
+        $table->construct_row();
     }
-    
+
+    $table->output($lang->rpgmaps_manage_actions);
+
     $page->output_footer();
 }
 
 /**
- * Approve action
+ * Antrag genehmigen oder ablehnen (Popup-Link mit my_post_key)
+ *
+ * @param bool $approve
  */
-function rpgmaps_admin_action_approve()
+function rpgmaps_admin_action_decide($approve)
 {
-    global $mybb, $db, $lang, $page;
+    global $mybb, $lang;
 
     rpgmaps_acp_verify_key();
-    
-    $page->add_breadcrumb_item($lang->rpgmaps, 'index.php?module=tools-rpgmaps');
-    $page->add_breadcrumb_item('Pending Actions', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions');
-    $page->add_breadcrumb_item('Approve Action');
-    $page->output_header($lang->rpgmaps . ' - Approve Action');
-    
-    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/rpgmaps.class.php';
-    $manager = new RPGMapsManager();
-    
-    $action_id = $mybb->get_input('id', MyBB::INPUT_INT);
-    $admin_note = $mybb->get_input('note');
-    
-    $result = $manager->approveBuildRequest($action_id, $mybb->user['uid'], $admin_note);
-    
-    if ($result['success']) {
-        flash_message('Action approved successfully!', 'success');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions');
-    } else {
-        $table = new Table;
-        $table->construct_cell('<strong>Error:</strong> ' . htmlspecialchars_uni($result['message']));
-        $table->construct_row();
-        $table->output('Error');
-        
-        $table = new Table;
-        $table->construct_cell('<a href="index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions">Back to Pending Actions</a>');
-        $table->construct_row();
-        $table->output('Actions');
-    }
-    
-    $page->output_footer();
-}
 
-/**
- * Reject action
- */
-function rpgmaps_admin_action_reject()
-{
-    global $mybb, $db, $lang, $page;
-
-    rpgmaps_acp_verify_key();
-    
-    $page->add_breadcrumb_item($lang->rpgmaps, 'index.php?module=tools-rpgmaps');
-    $page->add_breadcrumb_item('Pending Actions', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions');
-    $page->add_breadcrumb_item('Reject Action');
-    $page->output_header($lang->rpgmaps . ' - Reject Action');
-    
-    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/rpgmaps.class.php';
     $manager = new RPGMapsManager();
-    
     $action_id = $mybb->get_input('id', MyBB::INPUT_INT);
-    $admin_note = $mybb->get_input('note');
-    
-    $result = $manager->rejectAction($action_id, $mybb->user['uid'], $admin_note);
-    
-    if ($result['success']) {
-        flash_message('Action rejected successfully!', 'success');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions');
+    $note = $mybb->get_input('note');
+
+    $result = $approve
+        ? $manager->approveBuildRequest($action_id, (int)$mybb->user['uid'], $note)
+        : $manager->rejectAction($action_id, (int)$mybb->user['uid'], $note);
+
+    if (!empty($result['success'])) {
+        flash_message($approve ? $lang->rpgmaps_action_approved : $lang->rpgmaps_action_rejected, 'success');
     } else {
-        $table = new Table;
-        $table->construct_cell('<strong>Error:</strong> ' . htmlspecialchars_uni($result['message']));
-        $table->construct_row();
-        $table->output('Error');
-        
-        $table = new Table;
-        $table->construct_cell('<a href="index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions">Back to Pending Actions</a>');
-        $table->construct_row();
-        $table->output('Actions');
+        flash_message(htmlspecialchars_uni((string)$result['message']), 'error');
     }
-    
-    $page->output_footer();
+
+    admin_redirect(rpgmaps_acp_url('pending_actions'));
 }

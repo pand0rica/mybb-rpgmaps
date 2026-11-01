@@ -44,7 +44,6 @@
                 try {
                     this.config.lang = JSON.parse(langJson);
                 } catch(e) {
-                    console.error('RPGMaps: Failed to parse language JSON:', e);
                     this.config.lang = {};
                 }
             }
@@ -84,7 +83,6 @@
             
             const container = document.querySelector('[data-csrf-token]');
             if (!container) {
-                console.warn('RPGMaps: Container not found');
                 return;
             }
             
@@ -93,13 +91,11 @@
             
             
             if (origWidth <= 0 || origHeight <= 0) {
-                console.warn('RPGMaps: Invalid original dimensions');
                 return;
             }
             
             const mapImage = document.querySelector('.rpgmaps-map-image');
             if (!mapImage) {
-                console.warn('RPGMaps: Map image not found');
                 return;
             }
             
@@ -109,7 +105,6 @@
             
             
             if (displayedWidth <= 0 || displayedHeight <= 0) {
-                console.warn('RPGMaps: Map image has no dimensions yet');
                 return;
             }
             
@@ -233,7 +228,7 @@
                 } else if (this.config.is_logged_in) {
                     this.showBuildModal(plotId);
                 } else {
-                    alert('Du musst eingeloggt sein, um hier zu bauen.');
+                    alert(this.config.lang.login_required || 'Please log in to build here.');
                 }
             } else {
                 // Occupied plot - show info
@@ -255,8 +250,7 @@
                 if (response.success) {
                     this.displayHouseTooltip(response.house, response.house_type, response.house_types || [], response.occupants, response.plot, plotId);
                 } else {
-                    const errorMessage = response.message || response.error || 'Error loading house info.';
-                    console.error('RPGMaps: Failed to load house info:', errorMessage);
+                    const errorMessage = response.message || response.error || this.config.lang.error_generic;
                     this.showTooltip(plotId, '<p>' + this.escapeHtml(errorMessage) + '</p>');
                 }
             });
@@ -356,7 +350,7 @@
             // === Settings (occupants only) ===
             if (isOccupant) {
                 html += '<div class="tcat rpgmaps-section-head">'
-                    + (this.config.lang.house_settings || 'Einstellungen') + '</div>';
+                    + (this.config.lang.house_settings || 'Settings') + '</div>';
                 html += '<div class="trow1 rpgmaps-section-body">';
                 html += '<div class="form-group">'
                     + '<label>' + this.config.lang.type + '</label>'
@@ -412,12 +406,12 @@
             const houseName = houseNameInput.value.trim();
 
             if (!houseTypeId || houseTypeId <= 0) {
-                this.showMessage('error', 'Bitte einen gültigen Grundstücks-Typ wählen.');
+                this.showMessage('error', this.config.lang.invalid_house_type);
                 return;
             }
 
             if (!maxOccupants || maxOccupants < 1 || maxOccupants > 20) {
-                this.showMessage('error', 'Bitte eine gültige maximale Bewohnerzahl (1-20) eingeben.');
+                this.showMessage('error', this.config.lang.invalid_max_occupants);
                 return;
             }
 
@@ -467,9 +461,9 @@
                         }
                     }
 
-                    this.showMessage('success', response.message || 'Haus-Einstellungen gespeichert.');
+                    this.showMessage('success', response.message || this.config.lang.settings_saved);
                 } else {
-                    const errorMessage = response.message || response.error || 'Fehler beim Speichern der Haus-Einstellungen';
+                    const errorMessage = response.message || response.error || this.config.lang.error_generic;
                     this.showMessage('error', errorMessage);
                 }
             });
@@ -486,14 +480,7 @@
                 modal.classList.remove('hidden-modal');
                 modal.classList.add('visible');
             } else {
-                console.error('RPGMaps: Modal or input field not found!');
-                if (!modal) {
-                    console.error('RPGMaps: Modal element with ID "rpgmaps-modal-build" not found');
-                }
-                if (!plotIdInput) {
-                    console.error('RPGMaps: Input element with ID "build-plot-id" not found');
-                }
-                alert('Modal nicht gefunden! Bitte Seite neu laden.');
+                alert(this.config.lang.reload_page || 'Please reload the page.');
             }
         },
 
@@ -614,7 +601,6 @@
                 tooltip.style.left = left + 'px';
                 tooltip.style.top = top + 'px';
             } else {
-                console.error('RPGMaps: Plot element not found for positioning');
             }
         },
 
@@ -663,11 +649,7 @@
             
             // Check if all required elements exist
             if (!plotIdInput || !typeIdSelect || !maxOccupantsInput) {
-                console.error('RPGMaps: Form elements not found!');
-                if (!plotIdInput) console.error('RPGMaps: build-plot-id not found');
-                if (!typeIdSelect) console.error('RPGMaps: house-type-select not found');
-                if (!maxOccupantsInput) console.error('RPGMaps: max-occupants-input not found');
-                alert('Formularfelder nicht gefunden. Bitte Seite neu laden.');
+                alert(this.config.lang.reload_page || 'Please reload the page.');
                 return;
             }
             
@@ -678,12 +660,12 @@
             const houseName = houseNameInput ? houseNameInput.value.trim() : '';
 
             if (!typeId) {
-                alert('Please select a house type');
+                alert(this.config.lang.invalid_house_type || 'Please select a house type');
                 return;
             }
             
             if (!maxOccupants || maxOccupants < 1 || maxOccupants > 20) {
-                alert('Please enter a valid number of occupants (1-20)');
+                alert(this.config.lang.invalid_max_occupants || 'Please enter a valid number of occupants (1-20)');
                 return;
             }
 
@@ -728,8 +710,7 @@
                         this.hideModal();
                     }
                 } else {
-                    const errorMessage = response.message || response.error || 'Error submitting request';
-                    console.error('RPGMaps: Build request failed:', errorMessage);
+                    const errorMessage = response.message || response.error || this.config.lang.error_generic;
                     this.showMessage('error', errorMessage);
                 }
             });
@@ -752,7 +733,7 @@
                     this.showMessage('success', 'Move-in request submitted. Awaiting admin approval.');
                     this.hideModal();
                 } else {
-                    const errorMessage = response.message || response.error || 'Error submitting request';
+                    const errorMessage = response.message || response.error || this.config.lang.error_generic;
                     this.showMessage('error', errorMessage);
                 }
             });
@@ -772,7 +753,7 @@
 
             this.ajax(data, (response) => {
                 if (response.success) {
-                    this.showMessage('success', response.message || 'You have successfully moved out!');
+                    this.showMessage('success', response.message || this.config.lang.moved_out);
                     this.hideModal();
                     this.hideTooltip();
                     
@@ -804,7 +785,7 @@
                         }
                     }
                 } else {
-                    const errorMessage = response.message || response.error || 'Error submitting request';
+                    const errorMessage = response.message || response.error || this.config.lang.error_generic;
                     this.showMessage('error', errorMessage);
                 }
             });
@@ -880,9 +861,9 @@
                     }
 
                     this.cancelDescriptionEdit(houseId);
-                    this.showMessage('success', 'Description updated successfully');
+                    this.showMessage('success', response.message || this.config.lang.description_updated || 'Description updated');
                 } else {
-                    const errorMessage = response.message || response.error || 'Error updating description';
+                    const errorMessage = response.message || response.error || this.config.lang.error_generic;
                     this.showMessage('error', errorMessage);
                 }
             });
@@ -909,9 +890,8 @@
                 try {
                     data = JSON.parse(text);
                 } catch (e) {
-                    console.error('AJAX Error: Invalid JSON response:', text);
                     if (callback) {
-                        callback({ success: false, error: 'Invalid JSON response' });
+                        callback({ success: false, error: (this.config.lang.error_generic || 'Error') });
                     }
                     return;
                 }
@@ -920,9 +900,8 @@
                 }
             })
             .catch((error) => {
-                console.error('AJAX Error:', error);
                 if (callback) {
-                    callback({ success: false, error: 'Network error' });
+                    callback({ success: false, error: (this.config.lang.network_error || 'Network error') });
                 }
             });
         },

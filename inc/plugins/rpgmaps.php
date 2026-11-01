@@ -149,7 +149,7 @@ function rpgmaps_admin_menu_hook(&$sub_menu)
     
     $sub_menu['150'] = array(
         'id' => 'rpgmaps',
-        'title' => 'RPG Maps',
+        'title' => $lang->rpgmaps_admin_menu,
         'link' => 'index.php?module=tools-rpgmaps'
     );
 }

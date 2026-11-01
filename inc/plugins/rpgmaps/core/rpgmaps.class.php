@@ -11,6 +11,23 @@ if (!defined('IN_MYBB')) {
     exit;
 }
 
+/**
+ * Sprachvariable lesen; lädt die Sprachdatei bei Bedarf (Frontend: rpgmaps, ACP: admin/rpgmaps).
+ *
+ * @param string $key
+ * @return string
+ */
+function rpgmaps_lang($key)
+{
+    global $lang;
+
+    if (!isset($lang->rpgmaps_msg_invalid_params)) {
+        $lang->load('rpgmaps');
+    }
+
+    return isset($lang->$key) ? (string)$lang->$key : $key;
+}
+
 class RPGMapsManager
 {
     protected $db;
@@ -36,22 +53,22 @@ class RPGMapsManager
         // Verify plot exists and is free
         $plot = $this->db->getPlotById($plot_id);
         if (!$plot) {
-            return ['success' => false, 'message' => 'Plot not found'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_plot_not_found')];
         }
         
         if ($plot['status'] !== 'free') {
-            return ['success' => false, 'message' => 'Plot is not available'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_plot_unavailable')];
         }
         
         // Verify house type exists
         $house_type = $this->db->getHouseTypeById($house_type_id);
         if (!$house_type) {
-            return ['success' => false, 'message' => 'House type not found'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_house_type_not_found')];
         }
         
         // Validate max_occupants
         if ($max_occupants < 1 || $max_occupants > 20) {
-            return ['success' => false, 'message' => 'Invalid max occupants value'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_invalid_max_occupants')];
         }
         
         $house_name = trim($house_name);
@@ -72,7 +89,7 @@ class RPGMapsManager
 
         return [
             'success' => true,
-            'message' => 'Build request created. Awaiting admin approval.',
+            'message' => rpgmaps_lang('rpgmaps_msg_build_requested'),
             'action_id' => $action_id,
         ];
     }
@@ -88,7 +105,7 @@ class RPGMapsManager
         // Verify house exists and has space
         $house = $this->db->getHouseById($house_id);
         if (!$house || $house['status'] !== 'active') {
-            return ['success' => false, 'message' => 'House not available'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_house_unavailable')];
         }
         
         // Use house's max_occupants instead of house type default
@@ -96,14 +113,14 @@ class RPGMapsManager
         $occupant_count = $this->db->countActiveOccupants($house_id);
         
         if ($occupant_count >= $max_occupants) {
-            return ['success' => false, 'message' => 'House is full'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_house_full')];
         }
         
         // Check if user is already an occupant
         $occupants = $this->db->getHouseOccupants($house_id);
         foreach ($occupants as $occ) {
             if ($occ['uid'] == $user_id) {
-                return ['success' => false, 'message' => 'You are already living in this house'];
+                return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_already_resident')];
             }
         }
         
@@ -112,7 +129,7 @@ class RPGMapsManager
 
         return [
             'success' => true,
-            'message' => 'You have successfully moved into the house!',
+            'message' => rpgmaps_lang('rpgmaps_msg_moved_in'),
         ];
     }
     
@@ -127,7 +144,7 @@ class RPGMapsManager
         // Verify house exists
         $house = $this->db->getHouseById($house_id);
         if (!$house) {
-            return ['success' => false, 'message' => 'House not found'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_house_not_found')];
         }
         
         // Check if user is an occupant and get the occupant ID
@@ -141,7 +158,7 @@ class RPGMapsManager
         }
         
         if ($occupant_id === null) {
-            return ['success' => false, 'message' => 'You are not living in this house'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_not_resident')];
         }
         
         // Remove user from house immediately (no admin approval needed)
@@ -164,7 +181,7 @@ class RPGMapsManager
 
         return [
             'success' => true,
-            'message' => 'You have successfully moved out!',
+            'message' => rpgmaps_lang('rpgmaps_msg_moved_out'),
             'house_deleted' => $house_deleted,
             'plot_id' => $plot_id,
         ];
@@ -182,7 +199,7 @@ class RPGMapsManager
         // Verify house exists
         $house = $this->db->getHouseById($house_id);
         if (!$house) {
-            return ['success' => false, 'message' => 'House not found'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_house_not_found')];
         }
         
         // Check if user is an occupant
@@ -196,7 +213,7 @@ class RPGMapsManager
         }
         
         if (!$is_occupant) {
-            return ['success' => false, 'message' => 'Only occupants can edit the description'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_only_occupants')];
         }
         
         // Update description
@@ -204,7 +221,7 @@ class RPGMapsManager
 
         return [
             'success' => true,
-            'message' => 'Description updated successfully',
+            'message' => rpgmaps_lang('rpgmaps_msg_description_updated'),
         ];
     }
 
@@ -223,7 +240,7 @@ class RPGMapsManager
         // Verify house exists
         $house = $this->db->getHouseById($house_id);
         if (!$house) {
-            return ['success' => false, 'message' => 'House not found'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_house_not_found')];
         }
 
         // Check if user is an occupant
@@ -237,24 +254,24 @@ class RPGMapsManager
         }
 
         if (!$is_occupant) {
-            return ['success' => false, 'message' => 'Only occupants can edit house settings'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_only_occupants')];
         }
 
         // Validate house type
         $house_type = $this->db->getHouseTypeById($house_type_id);
         if (!$house_type) {
-            return ['success' => false, 'message' => 'House type not found'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_house_type_not_found')];
         }
 
         // Validate max occupants
         if ($max_occupants < 1 || $max_occupants > 20) {
-            return ['success' => false, 'message' => 'Invalid max occupants value'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_invalid_max_occupants')];
         }
 
         // Ensure max occupants cannot be lower than current residents
         $current_occupants = $this->db->countActiveOccupants($house_id);
         if ($max_occupants < $current_occupants) {
-            return ['success' => false, 'message' => 'Max occupants cannot be lower than current occupants'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_max_below_current')];
         }
 
         $house_name = trim($house_name);
@@ -273,7 +290,7 @@ class RPGMapsManager
 
         return [
             'success' => true,
-            'message' => 'House settings updated successfully',
+            'message' => rpgmaps_lang('rpgmaps_msg_settings_updated'),
             'type_id' => (int)$house_type_id,
             'max_occupants' => (int)$max_occupants,
             'type_name' => $house_type['name'],
@@ -296,7 +313,7 @@ class RPGMapsManager
         // Get action
         $action = $this->db->getActionById($action_id);
         if (!$action || $action['action_type'] !== 'build' || $action['status'] !== 'pending') {
-            return ['success' => false, 'message' => 'Invalid or already processed action'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_invalid_action')];
         }
         
         $plot_id = $action['target_id'];
@@ -305,13 +322,13 @@ class RPGMapsManager
         // Get plot
         $plot = $this->db->getPlotById($plot_id);
         if (!$plot) {
-            return ['success' => false, 'message' => 'Plot not found'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_plot_not_found')];
         }
         
         // Start transaction-like behavior by checking again
         if ($plot['status'] !== 'free') {
             $this->db->rejectAction($action_id, $admin_id, 'Plot no longer available');
-            return ['success' => false, 'message' => 'Plot is no longer available'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_plot_unavailable')];
         }
         
         // Extract house_type_id, max_occupants, and description from action extra_data
@@ -346,13 +363,13 @@ class RPGMapsManager
         // Ensure house_type_id is present and valid
         if (!$house_type_id) {
             $this->db->rejectAction($action_id, $admin_id, 'Missing house type');
-            return ['success' => false, 'message' => 'House type missing in request'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_house_type_not_found')];
         }
 
         $house_type = $this->db->getHouseTypeById($house_type_id);
         if (!$house_type) {
             $this->db->rejectAction($action_id, $admin_id, 'Invalid house type');
-            return ['success' => false, 'message' => 'House type not found'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_house_type_not_found')];
         }
 
         // Create house with requested max_occupants, selected type, and description
@@ -383,7 +400,7 @@ class RPGMapsManager
 
         return [
             'success' => true,
-            'message' => 'Build request approved. House created.',
+            'message' => rpgmaps_lang('rpgmaps_msg_build_approved'),
             'house_id' => $house_id,
         ];
     }
@@ -399,14 +416,14 @@ class RPGMapsManager
     {
         $action = $this->db->getActionById($action_id);
         if (!$action || $action['status'] !== 'pending') {
-            return ['success' => false, 'message' => 'Invalid or already processed action'];
+            return ['success' => false, 'message' => rpgmaps_lang('rpgmaps_msg_invalid_action')];
         }
         
         $this->db->rejectAction($action_id, $admin_id, $admin_note);
 
         return [
             'success' => true,
-            'message' => 'Action rejected.',
+            'message' => rpgmaps_lang('rpgmaps_msg_action_rejected'),
         ];
     }
     
