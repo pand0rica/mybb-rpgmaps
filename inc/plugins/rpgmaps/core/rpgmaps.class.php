@@ -242,6 +242,8 @@ class RPGMapsManager
      */
     public function updateHouseSettings($house_id, $user_id, $house_type_id, $max_occupants, $house_name = '')
     {
+        global $db;
+
         // Verify house exists
         $house = $this->db->getHouseById($house_id);
         if (!$house) {
@@ -287,7 +289,6 @@ class RPGMapsManager
         }
 
         // Update house settings (update_query escapet nicht selbst)
-        global $db;
         $this->db->updateHouse($house_id, [
             'type_id' => (int)$house_type_id,
             'max_occupants' => (int)$max_occupants,
@@ -317,6 +318,8 @@ class RPGMapsManager
      */
     public function approveBuildRequest($action_id, $admin_id, $admin_note = '')
     {
+        global $db;
+
         // Get action
         $action = $this->db->getActionById($action_id);
         if (!$action || $action['action_type'] !== 'build' || $action['status'] !== 'pending') {
@@ -380,7 +383,6 @@ class RPGMapsManager
         }
 
         // Create house with requested max_occupants, selected type, and description
-        global $db;
         $house_data = [
             'plot_id' => $plot_id,
             'type_id' => $house_type_id,

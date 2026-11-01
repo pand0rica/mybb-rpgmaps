@@ -94,47 +94,19 @@ function rpgmaps_is_installed()
 }
 
 /**
- * Frontend action hook - register frontend script
- * Handles main rpgmaps.php page
+ * Aufräumen beim Löschen von Accounts.
+ * datahandler_user_delete_start deckt alle Löschpfade ab (ACP einzeln/bulk, Merge, Frontend).
+ *
+ * @param UserDataHandler $userhandler
  */
-function rpgmaps_frontend_action_hook()
+function rpgmaps_user_delete_hook($userhandler)
 {
-    global $action, $mybb;
-    
-    // Only load our plugin code if action is 'rpgmaps'
-    if ($action === 'rpgmaps') {
-        require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/rpgmaps.class.php';
-        require_once MYBB_ROOT . 'inc/plugins/rpgmaps/frontend.php';
-    }
-}
-
-/**
- * AJAX hook for handling AJAX requests
- */
-function rpgmaps_ajax_hook()
-{
-    global $mybb;
-    
-    // Get the sub-action from AJAX request
-    $sub = $mybb->get_input('sub', MyBB::INPUT_STRING);
-
-    if (!empty($sub) && strpos($sub, 'rpgmaps_') === 0) {
-        // Load AJAX handler
-        require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/ajax.php';
-        rpgmaps_handle_ajax($sub);
-    }
-}
-
-/**
- * User delete hook
- * Cleans up occupants when users are deleted
- */
-function rpgmaps_user_delete_hook($uid)
-{
-    global $db;
-    
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/hooks.php';
-    rpgmaps_handle_user_deletion($uid);
+
+    $uids = isset($userhandler->delete_uids) ? (array)$userhandler->delete_uids : [];
+    foreach ($uids as $uid) {
+        rpgmaps_handle_user_deletion((int)$uid);
+    }
 }
 
 /**
@@ -183,11 +155,8 @@ require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/hooks.php';
 // Register hooks
 $plugins->add_hook('global_intermediate', 'rpgmaps_build_nav');
 $plugins->add_hook('global_intermediate', 'rpgmaps_register_myalerts_formatter', 20);
-$plugins->add_hook('action_start', 'rpgmaps_frontend_action_hook');
-$plugins->add_hook('ajax_rpgmaps', 'rpgmaps_ajax_hook');
-$plugins->add_hook('user_delete', 'rpgmaps_user_delete_hook');
-$plugins->add_hook('admin_action_handler', 'rpgmaps_admin_action_hook');
-$plugins->add_hook('admin_permissions', 'rpgmaps_admin_permissions');
+$plugins->add_hook('datahandler_user_delete_start', 'rpgmaps_user_delete_hook');
+$plugins->add_hook('admin_tools_permissions', 'rpgmaps_admin_permissions');
 $plugins->add_hook('admin_tools_menu', 'rpgmaps_admin_menu_hook');
 $plugins->add_hook('admin_tools_action_handler', 'rpgmaps_admin_action_hook');
 $plugins->add_hook('index_end', 'rpgmaps_index_notification');

@@ -17,6 +17,8 @@ if (!defined('IN_MYBB')) {
  */
 function rpgmaps_register_myalerts_formatter()
 {
+    global $mybb, $lang;
+
     if (!function_exists('myalerts_create_instances')) {
         return;
     }
@@ -25,8 +27,6 @@ function rpgmaps_register_myalerts_formatter()
     if (!$formatterManager) {
         return;
     }
-
-    global $mybb, $lang;
 
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/src/Formatter/BuildApprovedFormatter.php';
 

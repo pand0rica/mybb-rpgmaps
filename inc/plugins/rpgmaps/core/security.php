@@ -14,42 +14,31 @@ if (!defined('IN_MYBB')) {
 class RPGMapsSecurity
 {
     /**
-     * Verify CSRF token
+     * CSRF-Token prüfen (MyBB my_post_key).
+     * Früher wurde die Session-ID als Token genutzt – die gehört nicht ins HTML.
      * @param string $token
      * @return bool
      */
     public static function verifyCSRFToken($token)
     {
-        global $mybb;
-        
-        if (empty($token)) {
+        if (!is_string($token) || $token === '') {
             return false;
         }
-        
-        // Get the session token from the session
-        if (!isset($mybb->session) || empty($mybb->session->sid)) {
-            return false;
-        }
-        
-        // Verify token matches
-        return $token === $mybb->session->sid;
+
+        return verify_post_check($token, true) === true;
     }
-    
+
     /**
-     * Generate CSRF token for forms
+     * CSRF-Token für Formulare/AJAX erzeugen (MyBB my_post_key).
      * @return string
      */
     public static function generateCSRFToken()
     {
         global $mybb;
-        
-        if (!isset($mybb->session) || empty($mybb->session->sid)) {
-            return '';
-        }
-        
-        return $mybb->session->sid;
+
+        return isset($mybb->post_code) ? (string)$mybb->post_code : '';
     }
-    
+
     /**
      * Validate input - string
      * @param string $input
