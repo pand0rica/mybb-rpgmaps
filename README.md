@@ -1,85 +1,113 @@
-# RPG Maps – Interactive Map Plugin for MyBB 1.8
+# RPG Maps – Interactive Maps for MyBB 1.8
 
-A MyBB 1.8 plugin that lets forum admins create interactive image-based maps for RPG forums. Users can view maps, click on plots, submit build requests, and manage their houses. Admins approve requests and manage maps, plots, and house types via the ACP.
+RPG Maps adds interactive, image-based city maps to RPG forums. The team draws building plots onto a map; members claim free plots with a build request, and once the team approves it the house appears on the map. Members can move into existing houses, move out again and maintain their house's name and description.
 
 ## Requirements
 
 - MyBB 1.8.x
-- PHP 7.4 or higher
-- MySQL 5.7+ or MariaDB 10.4+
-- **Optional:** [MyAlerts](https://github.com/euantorano/myalerts) – enables in-forum notifications when build requests are approved
+- PHP 7.4 or 8.x
+- MySQL 5.7+ or MariaDB 10.4+ (the tables use InnoDB and foreign keys)
+- **Optional:** [MyAlerts](https://github.com/MyBBStuff/MyAlerts) – sends an alert when a build request is approved
 
 ## Installation
 
-1. **Upload files**
-   - Copy all plugin files into your MyBB root directory, preserving the folder structure
+1. Upload all files to your MyBB root directory, keeping the folder structure.
+2. Make sure `inc/plugins/rpgmaps/assets/maps/` and `inc/plugins/rpgmaps/assets/houses/` are writable by the web server (uploaded images are stored there).
+3. **ACP → Configuration → Plugins → RPG Maps → Install & Activate.**
+   This creates the tables and settings, loads the templates and the `rpgmaps.css` stylesheet and adds a **Maps** link to the header menu.
+4. **ACP → Configuration → Settings → RPG Maps Plugin** – check the settings (see [Configuration](#configuration)).
+5. If your admin groups use restricted permissions: **ACP → Users & Groups → Admin Permissions → Tools & Maintenance → Can manage RPG Maps?**
 
-2. **Activate the plugin**
-   - Go to **Admin CP → Configuration → Plugins**
-   - Find *RPG Maps* and click **Activate**
-   - The plugin creates all necessary database tables automatically
+> If your theme uses a heavily customised `header` template, the menu link may be placed before the first `</ul>` instead of next to *Search*. You can move `{$rpgmaps_nav}` anywhere in the `header` template.
 
-3. **Configure settings**
-   - Go to **Admin CP → Configuration → Settings → RPG Maps**
-   - Adjust settings as needed (see [Configuration](#configuration))
+## Usage
 
-4. **Create your first map**
-   - Go to **Admin CP → Tools → RPG Maps**
-   - Click **Add Map**, enter a title and upload a map image
-   - Add plots to the map by clicking **Manage Plots**
+### 1. Create house types
 
-5. **Set up house types** *(optional)*
-   - Go to **Admin CP → Tools → RPG Maps → House Types**
-   - Add house types with names and images that users can choose when building
+**ACP → Tools & Maintenance → RPG Maps → House types → Add house type**
 
-6. **Approve requests**
-   - Users submit build and move-in/out requests from the frontend
-   - Approve or reject them under **Admin CP → Tools → RPG Maps → Pending Actions**
+- **Name** – shown in the build form and on the map (e.g. *Cottage*, *Town house*).
+- **Description** – internal note.
+- **Image** – the house graphic placed on the plot once it is built (PNG, JPG, GIF, WebP).
+- **Icon scale** – scale factor for the house graphic.
+
+A house type can only be deleted while no house uses it.
+
+### 2. Create a map
+
+**ACP → Tools & Maintenance → RPG Maps → Maps → Add map**
+
+- **Title** and **Description** – shown on the map page.
+- **Width / Height (px)** – the original size of the map image. All plot coordinates refer to this size; the browser scales map and plots automatically to the available width.
+- **Map image** – the map graphic.
+
+![ACP map overview](docs/screenshots/acp-map-overview.png)
+
+### 3. Add plots
+
+**Maps → Options → Manage plots → Add plot**
+
+- **Plot key** – unique per map; generated automatically if left empty.
+- **X / Y position, Width, Height** – pixel values relative to the original map size. Width and height are capped by the *Maximum Plot Size* setting.
+- **Rotation** – 0–359 degrees.
+- **Label** – shown when hovering the plot.
+
+![ACP plot editor](docs/screenshots/acp-plot-editor.png)
+
+### 4. Members: build, move in, move out
+
+The **Maps** link in the header leads to `rpgmaps.php` with a list of all maps. On a map, plots are colour-coded:
+
+- **Free (green)** – logged-in members click it, choose a house type, the maximum number of residents (1–20) and optionally a house name and description, and submit a **build request**.
+- **Requested (yellow)** – a build request is waiting for the team.
+- **Built** – shows the house graphic. Clicking it opens the house information: type, name, description (MyCode), residents and free places.
+
+In a built house:
+
+- **Move in** – any logged-in member can move in immediately as long as there is a free place.
+- **Move out** – residents can move out immediately. When the last resident leaves, the house is removed and the plot becomes free again.
+- **Edit** – residents can change the description and the house settings (type, maximum residents, name). The maximum cannot be set below the current number of residents.
+
+![Frontend map view](docs/screenshots/frontend-map-view.png)
+![House information](docs/screenshots/house-info-tooltip.png)
+
+### 5. Team: approve build requests
+
+Pending build requests can be handled in two places:
+
+- **ModCP → RPG Maps** – list with member, map/plot and date, plus *Approve* / *Reject* buttons. The ModCP menu entry shows the number of pending requests.
+- **ACP → Tools & Maintenance → RPG Maps → Build requests** – the same list with an options menu.
+
+Team members with ModCP or ACP access also see a notice on the forum index while requests are pending.
+
+When a request is approved, the house is created, the requesting member becomes its contact person and – if MyAlerts is installed – receives an alert. A request is rejected automatically if the plot was taken in the meantime or the house type no longer exists.
+
+### Automatic clean-up
+
+When an account is deleted (any deletion path: ACP, bulk delete, merge), the member is removed from all houses, their pending build requests are dropped, and houses that end up without residents are removed so the plots become free.
 
 ## Configuration
 
-All settings are found under **Admin CP → Configuration → Settings → RPG Maps**.
+**ACP → Configuration → Settings → RPG Maps Plugin**
 
 | Setting | Description | Default |
 |---------|-------------|---------|
-| `rpgmaps_enabled` | Master switch – enable or disable the plugin globally | On |
-| `rpgmaps_max_upload_size` | Maximum allowed image upload size in KB | 512 |
-| `rpgmaps_max_plot_size` | Maximum plot overlay size in pixels | 200 |
-| `rpgmaps_allowed_extensions` | Comma-separated list of allowed image file types | png,jpg,jpeg,gif |
+| Enable RPG Maps Plugin | Turns the map pages and the header link on or off | Yes |
+| Maximum Plot Size | Upper limit for plot width and height in pixels (0 = no limit) | 200 |
+| Maximum Upload Size (KB) | Maximum file size for map and house images | 512 |
+| Allowed File Extensions | Comma-separated list; the file's MIME type must also match the extension (png, jpg/jpeg, gif, webp) | png,jpg,jpeg,gif |
 
-## Features
+## Updating
 
-- **Interactive maps** – image-based maps with named, clickable plot overlays (percentage-based coordinates, fully responsive)
-- **House ownership** – users submit build requests; admins approve or reject them via ACP
-- **Move-in / move-out** – residents can request to join or leave a house (with admin approval)
-- **House details** – owners can set a house name, description (BBCode), and adjust house type and occupant limit
-- **House types** – configurable building types with custom images and default occupant limits
-- **MyAlerts integration** – optional; owners receive an in-forum notification when their build request is approved
-- **ModCP view** – moderators can browse maps and houses in read-only mode
-- **ACP management** – full admin interface for maps, plots, house types, and pending requests
-- **Bilingual** – English, German (du) and German (Sie) language files included
+1. Upload the new files and overwrite the existing ones.
+2. **ACP → Configuration → Plugins → RPG Maps → Deactivate**, then **Activate**.
 
-## Screenshots
-
-![ACP Map Overview](docs/screenshots/acp-map-overview.png)
-![ACP Plot Editor](docs/screenshots/acp-plot-editor.png)
-![Frontend Map View](docs/screenshots/frontend-map-view.png)
-![House Info Tooltip](docs/screenshots/house-info-tooltip.png)
+Activating again runs the database migrations, adds new settings and reloads the templates and the stylesheet. Your maps, houses and settings are kept. Templates you customised per theme are replaced by the new versions.
 
 ## Uninstallation
 
-1. Go to **Admin CP → Configuration → Plugins**
-2. Click **Deactivate** next to *RPG Maps*
-3. Click **Uninstall** – this removes all database tables and settings created by the plugin
-4. Delete the plugin files from your server:
-   - `rpgmaps.php` (MyBB root)
-   - `inc/plugins/rpgmaps.php`
-   - `inc/plugins/rpgmaps/` (entire folder)
-   - `admin/modules/tools/rpgmaps.php`
-   - `inc/languages/english/rpgmaps.lang.php`
-   - `inc/languages/deutsch_du/rpgmaps.lang.php`
-   - `inc/languages/deutsch_sie/rpgmaps.lang.php` *(if present)*
+**ACP → Configuration → Plugins → RPG Maps → Uninstall.** This removes all tables, settings, templates, the stylesheet, the header link and the MyAlerts alert type. Uploaded images in `inc/plugins/rpgmaps/assets/maps/` and `…/houses/` are kept; delete them manually if no longer needed.
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for the full version history.
+See [CHANGELOG.md](CHANGELOG.md).

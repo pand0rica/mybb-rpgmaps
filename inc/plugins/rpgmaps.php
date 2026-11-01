@@ -3,9 +3,7 @@
  * RPG Maps Plugin for myBB 1.8.x
  * Manage fantasy city maps, building plots, and house ownership
  * 
- * @copyright 2026
- * @license MIT
- * @version 1.0.0
+ * @license GPL-3.0-or-later
  */
 
 // Prevent direct access
@@ -22,10 +20,10 @@ function rpgmaps_info()
     return [
         'name' => 'RPG Maps Plugin',
         'description' => 'Manage fantasy city maps, building plots, and house ownership with administrative approval system',
-        'website' => '',
+        'website' => 'https://github.com/pand0rica/mybb-rpgmaps',
         'author' => 'pand0rica',
         'authorsite' => 'https://github.com/pand0rica',
-        'version' => '1.1.0',
+        'version' => '1.2.0',
         'codename' => 'rpgmaps',
         'compatibility' => '18*',
         'pl' => 0,

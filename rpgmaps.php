@@ -4,7 +4,6 @@
  * Public page for viewing interactive maps
  * 
  * @package rpgmaps
- * @version 1.0.0
  */
 
 define('IN_MYBB', 1);

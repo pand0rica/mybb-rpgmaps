@@ -228,7 +228,7 @@ function rpgmaps_install_settings()
         ],
         'rpgmaps_max_plot_size' => [
             'title' => 'Maximum Plot Size',
-            'description' => 'Maximum number of pixels for plot width/height',
+            'description' => 'Upper limit for plot width and height in pixels (0 = no limit)',
             'optionscode' => 'numeric',
             'value' => 200,
             'disporder' => 2,

@@ -13,3 +13,4 @@ docs/screenshots/*.jpg
 # Interne Entwicklungsdoks
 DELIVERY_SUMMARY.md
 TESTING.md
+*.dump
