@@ -91,7 +91,7 @@ function rpgmaps_modcp_pending_list()
         }
     }
     
-    eval('$content = "' . $templates->get('modcp_rpgmaps_pending') . '";');
+    eval('$content = "' . $templates->get('rpgmaps_modcp_pending') . '";');
     
     output_page($content);
 }

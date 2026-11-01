@@ -26,26 +26,6 @@ function rpgmaps_json_output($data)
 }
 
 /**
- * Helper function to handle database errors and output JSON error response
- * @param string $function_name
- * @param Exception|string $error
- */
-function rpgmaps_handle_db_error($function_name, $error)
-{
-    global $db;
-    
-    $message = $error instanceof Exception ? $error->getMessage() : (string)$error;
-    $db_error = isset($db->error) ? $db->error : 'Database error';
-    
-    // Return error response (db_error intentionally omitted to prevent info disclosure)
-    rpgmaps_json_output([
-        'success' => false,
-        'message' => $message,
-        'error' => $message,
-    ]);
-}
-
-/**
  * Main AJAX handler dispatcher
  * @param string $action
  */

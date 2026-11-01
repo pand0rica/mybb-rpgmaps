@@ -1,0 +1,1 @@
+<li {$rpgmaps_nav_active}><a href="{$mybb->settings['bburl']}/rpgmaps.php">{$lang->rpgmaps_nav_maps}</a></li>

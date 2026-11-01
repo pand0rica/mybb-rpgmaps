@@ -33,52 +33,57 @@ function rpgmaps_info()
 }
 
 /**
- * Install function called when plugin is activated
- * Creates database tables, templates, and settings
+ * Installation: Tabellen, Settings und MyAlerts-Typ anlegen (Nutzerdaten).
+ * Templates, Stylesheet und Header-Link legt activate() an.
  */
 function rpgmaps_install()
 {
-    global $db;
-
-    // Include database setup
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/installer.php';
+
     rpgmaps_install_tables();
-    rpgmaps_install_templates();
     rpgmaps_install_settings();
-    rpgmaps_install_hooks();
-    rpgmaps_install_css();
     rpgmaps_install_alert_type();
 }
 
 /**
- * Activate function called when plugin is activated/enabled
- * Updates templates for existing installations
+ * Aktivierung: Migrationen, neue Settings nachrüsten, Templates, Stylesheet, Header-Link.
+ * Spiegelbild: rpgmaps_deactivate().
  */
 function rpgmaps_activate()
 {
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/installer.php';
-    rpgmaps_update_templates();
+
     rpgmaps_update_tables();
-    rpgmaps_update_css();
+    rpgmaps_install_settings();   // idempotent, fasst vorhandene Werte nicht an
     rpgmaps_install_alert_type();
+    rpgmaps_install_templates();
+    rpgmaps_install_css();
+    rpgmaps_add_nav_to_header();
 }
 
 /**
- * Uninstall function called when plugin is deactivated
- * Removes database tables, templates, and settings
+ * Deaktivierung: entfernt exakt, was activate() anlegt.
+ * Settings und Daten bleiben erhalten (die entfernt erst uninstall()).
+ */
+function rpgmaps_deactivate()
+{
+    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/installer.php';
+
+    rpgmaps_remove_nav_from_header();
+    rpgmaps_uninstall_templates();
+    rpgmaps_uninstall_css();
+}
+
+/**
+ * Deinstallation: Tabellen, Settings und MyAlerts-Typ entfernen.
  */
 function rpgmaps_uninstall()
 {
-    global $db;
-
-    // Include database setup
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/installer.php';
+
     rpgmaps_uninstall_alert_type();
     rpgmaps_uninstall_tables();
-    rpgmaps_uninstall_templates();
     rpgmaps_uninstall_settings();
-    rpgmaps_uninstall_css();
-    rpgmaps_uninstall_hooks();
 }
 
 /**
@@ -147,6 +152,12 @@ function rpgmaps_admin_menu_hook(&$sub_menu)
         'title' => 'RPG Maps',
         'link' => 'index.php?module=tools-rpgmaps'
     );
+}
+
+// Nav-Template im Frontend mit vorab cachen (spart eine Query pro Seite)
+// (Plugin-Dateien werden innerhalb von pluginSystem::load() eingebunden, daher $GLOBALS)
+if (!defined('IN_ADMINCP') && isset($GLOBALS['templatelist'])) {
+    $GLOBALS['templatelist'] .= ',rpgmaps_nav';
 }
 
 // Load hook functions

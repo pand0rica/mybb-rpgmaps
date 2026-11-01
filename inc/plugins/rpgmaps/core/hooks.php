@@ -139,7 +139,7 @@ function rpgmaps_modcp_handler()
         ? ' <span class="rpgmaps-pending-badge">' . (int)$pending_count . '</span>'
         : '';
     $nav_item = '';
-    eval('$nav_item = "' . $templates->get('modcp_nav_rpgmaps') . '";');
+    eval('$nav_item = "' . $templates->get('rpgmaps_modcp_nav') . '";');
     $insert_pos = strrpos($modcp_nav, '</table>');
     if ($insert_pos !== false) {
         $modcp_nav = substr_replace($modcp_nav, $nav_item, $insert_pos, 0);

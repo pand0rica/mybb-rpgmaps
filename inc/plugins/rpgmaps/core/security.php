@@ -38,73 +38,6 @@ class RPGMapsSecurity
 
         return isset($mybb->post_code) ? (string)$mybb->post_code : '';
     }
-
-    /**
-     * Validate input - string
-     * @param string $input
-     * @param int $min
-     * @param int $max
-     * @return bool
-     */
-    public static function validateString($input, $min = 1, $max = 255)
-    {
-        if (!is_string($input)) {
-            return false;
-        }
-        
-        $len = mb_strlen($input);
-        return $len >= $min && $len <= $max;
-    }
-    
-    /**
-     * Validate input - integer
-     * @param mixed $input
-     * @param int $min
-     * @param int $max
-     * @return bool
-     */
-    public static function validateInteger($input, $min = 0, $max = PHP_INT_MAX)
-    {
-        $int = filter_var($input, FILTER_VALIDATE_INT);
-        
-        if ($int === false) {
-            return false;
-        }
-        
-        return $int >= $min && $int <= $max;
-    }
-    
-    /**
-     * Validate coordinate
-     * @param int $value
-     * @param int $max
-     * @return bool
-     */
-    public static function validateCoordinate($value, $max = 10000)
-    {
-        return self::validateInteger($value, 0, $max);
-    }
-    
-    /**
-     * Validate email
-     * @param string $email
-     * @return bool
-     */
-    public static function validateEmail($email)
-    {
-        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
-    }
-    
-    /**
-     * Sanitize string for database
-     * @param string $str
-     * @return string
-     */
-    public static function sanitizeString($str)
-    {
-        global $db;
-        return $db->escape_string($str);
-    }
     
     /**
      * Check if user is logged in
@@ -130,27 +63,6 @@ class RPGMapsSecurity
         }
         
         return null;
-    }
-    
-    /**
-     * Check admin permission
-     * @param string $permission
-     * @return bool
-     */
-    public static function checkAdminPermission($permission = 'rpgmaps')
-    {
-        global $admin;
-        
-        if (!isset($admin)) {
-            return false;
-        }
-        
-        // Check if admin has can_manage_rpgmaps permission
-        if (!isset($admin->permissions[$permission])) {
-            return false;
-        }
-        
-        return (bool)$admin->permissions[$permission];
     }
     
     /**
@@ -186,24 +98,19 @@ class RPGMapsSecurity
         $mime = finfo_file($finfo, $file['tmp_name']);
         finfo_close($finfo);
         
+        // MIME-Typ muss ein Bild sein UND zur Dateiendung passen
+        // (verhindert z.B. image.php mit PNG-Inhalt, falls die Endungsliste falsch gepflegt ist)
         $allowed_mimes = [
-            'image/png' => 'png',
+            'image/png'  => ['png'],
             'image/jpeg' => ['jpg', 'jpeg'],
-            'image/gif' => 'gif',
+            'image/gif'  => ['gif'],
+            'image/webp' => ['webp'],
         ];
-        
-        $valid_mime = false;
-        foreach ($allowed_mimes as $mime_type => $exts) {
-            if ($mime === $mime_type) {
-                $valid_mime = true;
-                break;
-            }
-        }
-        
-        if (!$valid_mime) {
+
+        if (!isset($allowed_mimes[$mime]) || !in_array($ext, $allowed_mimes[$mime], true)) {
             return ['valid' => false, 'error' => 'Invalid MIME type'];
         }
-        
+
         return ['valid' => true];
     }
     
@@ -265,24 +172,6 @@ class RPGMapsAsset
     }
     
     /**
-     * Get relative URL to maps directory
-     * @return string
-     */
-    public static function getMapURL()
-    {
-        return $GLOBALS['mybb']->settings['bburl'] . '/' . self::$mapPath;
-    }
-    
-    /**
-     * Get relative URL to houses directory
-     * @return string
-     */
-    public static function getHouseURL()
-    {
-        return $GLOBALS['mybb']->settings['bburl'] . '/' . self::$housePath;
-    }
-    
-    /**
      * Upload map image
      * @param array $file
      * @return array ['success' => bool, 'filename' => string, 'error' => string]
@@ -291,9 +180,9 @@ class RPGMapsAsset
     {
         global $mybb;
         
-        $max_size = (int)$mybb->settings['rpgmaps_max_upload_size'] * 1024; // Convert KB to bytes
-        $allowed_extensions = explode(',', $mybb->settings['rpgmaps_allowed_extensions']);
-        $allowed_extensions = array_map('trim', $allowed_extensions);
+        $max_kb = (int)($mybb->settings['rpgmaps_max_upload_size'] ?? 0);
+        $max_size = ($max_kb > 0 ? $max_kb : 512) * 1024; // KB -> Bytes
+        $allowed_extensions = array_filter(array_map('trim', explode(',', strtolower((string)($mybb->settings['rpgmaps_allowed_extensions'] ?? 'png,jpg,jpeg,gif')))));
         
         // Verify upload
         $verify = RPGMapsSecurity::verifyFileUpload($file, $allowed_extensions, $max_size);
@@ -308,7 +197,7 @@ class RPGMapsAsset
         
         // Ensure directory exists
         if (!is_dir(self::getMapDirectory())) {
-            @mkdir(self::getMapDirectory(), 0755, true);
+            mkdir(self::getMapDirectory(), 0755, true);
         }
         
         // Move uploaded file
@@ -331,9 +220,9 @@ class RPGMapsAsset
     {
         global $mybb;
         
-        $max_size = (int)$mybb->settings['rpgmaps_max_upload_size'] * 1024; // Convert KB to bytes
-        $allowed_extensions = explode(',', $mybb->settings['rpgmaps_allowed_extensions']);
-        $allowed_extensions = array_map('trim', $allowed_extensions);
+        $max_kb = (int)($mybb->settings['rpgmaps_max_upload_size'] ?? 0);
+        $max_size = ($max_kb > 0 ? $max_kb : 512) * 1024; // KB -> Bytes
+        $allowed_extensions = array_filter(array_map('trim', explode(',', strtolower((string)($mybb->settings['rpgmaps_allowed_extensions'] ?? 'png,jpg,jpeg,gif')))));
         
         // Verify upload
         $verify = RPGMapsSecurity::verifyFileUpload($file, $allowed_extensions, $max_size);
@@ -348,7 +237,7 @@ class RPGMapsAsset
         
         // Ensure directory exists
         if (!is_dir(self::getHouseDirectory())) {
-            @mkdir(self::getHouseDirectory(), 0755, true);
+            mkdir(self::getHouseDirectory(), 0755, true);
         }
         
         // Move uploaded file
@@ -381,27 +270,5 @@ class RPGMapsAsset
         }
         
         return false;
-    }
-    
-    /**
-     * Check if map file exists
-     * @param string $filename
-     * @return bool
-     */
-    public static function mapFileExists($filename)
-    {
-        $path = self::getMapDirectory() . basename($filename);
-        return file_exists($path) && is_file($path);
-    }
-    
-    /**
-     * Check if house file exists
-     * @param string $filename
-     * @return bool
-     */
-    public static function houseFileExists($filename)
-    {
-        $path = self::getHouseDirectory() . basename($filename);
-        return file_exists($path) && is_file($path);
     }
 }

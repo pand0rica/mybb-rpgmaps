@@ -125,6 +125,61 @@ function rpgmaps_acp_verify_key()
 }
 
 /**
+ * Bild-Upload im ACP über RPGMapsAsset (prüft Endung, MIME-Typ und Größe laut Settings).
+ * Ohne Upload bleibt der bisherige Dateiname erhalten. Ein ersetztes Bild wird gelöscht.
+ *
+ * @param string $field     Name des Dateifelds
+ * @param string $type      'map' oder 'house'
+ * @param string $current   bisheriger Dateiname (bzw. placeholder.png)
+ * @param string $error_url Ziel bei Fehler
+ * @return string Dateiname
+ */
+function rpgmaps_acp_handle_upload($field, $type, $current, $error_url)
+{
+    global $lang;
+
+    if (!isset($_FILES[$field]) || !is_array($_FILES[$field]) || (int)$_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE) {
+        return $current;
+    }
+
+    if ((int)$_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
+        flash_message($lang->rpgmaps_upload_failed, 'error');
+        admin_redirect($error_url);
+    }
+
+    $result = $type === 'house'
+        ? RPGMapsAsset::uploadHouseImage($_FILES[$field])
+        : RPGMapsAsset::uploadMapImage($_FILES[$field]);
+
+    if (empty($result['success'])) {
+        flash_message($lang->sprintf($lang->rpgmaps_upload_invalid, htmlspecialchars_uni((string)$result['error'])), 'error');
+        admin_redirect($error_url);
+    }
+
+    if ($current !== '' && $current !== 'placeholder.png') {
+        RPGMapsAsset::deleteFile($current, $type);
+    }
+
+    return $result['filename'];
+}
+
+/**
+ * Plot-Breite/-Höhe auf 1 … rpgmaps_max_plot_size begrenzen (0 = unbegrenzt).
+ *
+ * @param int $value
+ * @return int
+ */
+function rpgmaps_acp_plot_size($value)
+{
+    global $mybb;
+
+    $max = (int)($mybb->settings['rpgmaps_max_plot_size'] ?? 0);
+    $value = max(1, (int)$value);
+
+    return $max > 0 ? min($value, $max) : $value;
+}
+
+/**
  * Overview page
  */
 function rpgmaps_admin_overview()
@@ -282,35 +337,8 @@ function rpgmaps_admin_maps_add()
         require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
         $db_helper = new RPGMapsDatabase();
 
-        // Handle file upload
-        $filename = '';
-        if (isset($_FILES['map_image']) && $_FILES['map_image']['error'] == UPLOAD_ERR_OK) {
-            $upload_dir = MYBB_ROOT . 'inc/plugins/rpgmaps/assets/maps/';
-            if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0755, true);
-            }
-
-            $file_ext = strtolower(pathinfo($_FILES['map_image']['name'], PATHINFO_EXTENSION));
-            $allowed_exts = array('png', 'jpg', 'jpeg', 'gif');
-
-            if (in_array($file_ext, $allowed_exts)) {
-                $filename = 'map_' . time() . '.' . $file_ext;
-                $target_path = $upload_dir . $filename;
-
-                if (move_uploaded_file($_FILES['map_image']['tmp_name'], $target_path)) {
-                    // File uploaded successfully
-                } else {
-                    flash_message('Fehler beim Hochladen der Datei', 'error');
-                    admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_add');
-                }
-            } else {
-                flash_message('Ungültiges Dateiformat. Nur PNG, JPG und GIF erlaubt.', 'error');
-                admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_add');
-            }
-        } else {
-            // No file uploaded, use placeholder
-            $filename = 'placeholder.png';
-        }
+        // Handle file upload (Endung, MIME-Typ und Größe laut Settings)
+        $filename = rpgmaps_acp_handle_upload('map_image', 'map', 'placeholder.png', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_add');
 
         $map_data = array(
             'title' => $db->escape_string($mybb->get_input('title')),
@@ -378,37 +406,8 @@ function rpgmaps_admin_maps_edit()
     if ($mybb->request_method == 'post') {
         rpgmaps_acp_verify_key();
 
-        // Handle file upload if provided
-        $filename = $map['filename']; // Keep existing filename by default
-
-        if (isset($_FILES['map_image']) && $_FILES['map_image']['error'] == UPLOAD_ERR_OK) {
-            $upload_dir = MYBB_ROOT . 'inc/plugins/rpgmaps/assets/maps/';
-            if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0755, true);
-            }
-
-            $file_ext = strtolower(pathinfo($_FILES['map_image']['name'], PATHINFO_EXTENSION));
-            $allowed_exts = array('png', 'jpg', 'jpeg', 'gif');
-
-            if (in_array($file_ext, $allowed_exts)) {
-                $new_filename = 'map_' . time() . '.' . $file_ext;
-                $target_path = $upload_dir . $new_filename;
-
-                if (move_uploaded_file($_FILES['map_image']['tmp_name'], $target_path)) {
-                    // Delete old file if it exists and is not placeholder
-                    if ($filename != 'placeholder.png' && file_exists($upload_dir . $filename)) {
-                        @unlink($upload_dir . $filename);
-                    }
-                    $filename = $new_filename;
-                } else {
-                    flash_message('Fehler beim Hochladen der Datei', 'error');
-                    admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_edit&id=' . $map_id);
-                }
-            } else {
-                flash_message('Ungültiges Dateiformat. Nur PNG, JPG und GIF erlaubt.', 'error');
-                admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_edit&id=' . $map_id);
-            }
-        }
+        // Handle file upload (Endung, MIME-Typ und Größe laut Settings)
+        $filename = rpgmaps_acp_handle_upload('map_image', 'map', $map['filename'], 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_edit&id=' . $map_id);
 
         $map_data = array(
             'title' => $db->escape_string($mybb->get_input('title')),
@@ -613,8 +612,8 @@ function rpgmaps_admin_buildplots_add()
             'plot_key' => $db->escape_string($plot_key),
             'x' => $mybb->get_input('x', MyBB::INPUT_INT),
             'y' => $mybb->get_input('y', MyBB::INPUT_INT),
-            'w' => $mybb->get_input('w', MyBB::INPUT_INT),
-            'h' => $mybb->get_input('h', MyBB::INPUT_INT),
+            'w' => rpgmaps_acp_plot_size($mybb->get_input('w', MyBB::INPUT_INT)),
+            'h' => rpgmaps_acp_plot_size($mybb->get_input('h', MyBB::INPUT_INT)),
             'rotation' => $rotation,
             'tooltip_text' => $db->escape_string($mybb->get_input('tooltip_text')),
             'status' => 'free'
@@ -697,8 +696,8 @@ function rpgmaps_admin_buildplots_edit()
             'plot_key' => $db->escape_string($mybb->get_input('plot_key')),
             'x' => $mybb->get_input('x', MyBB::INPUT_INT),
             'y' => $mybb->get_input('y', MyBB::INPUT_INT),
-            'w' => $mybb->get_input('w', MyBB::INPUT_INT),
-            'h' => $mybb->get_input('h', MyBB::INPUT_INT),
+            'w' => rpgmaps_acp_plot_size($mybb->get_input('w', MyBB::INPUT_INT)),
+            'h' => rpgmaps_acp_plot_size($mybb->get_input('h', MyBB::INPUT_INT)),
             'rotation' => $rotation,
             'tooltip_text' => $db->escape_string($mybb->get_input('tooltip_text'))
         );
@@ -834,35 +833,8 @@ function rpgmaps_admin_house_types_add()
         require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
         $db_helper = new RPGMapsDatabase();
 
-        // Handle file upload
-        $filename = '';
-        if (isset($_FILES['house_image']) && $_FILES['house_image']['error'] == UPLOAD_ERR_OK) {
-            $upload_dir = MYBB_ROOT . 'inc/plugins/rpgmaps/assets/houses/';
-            if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0755, true);
-            }
-
-            $file_ext = strtolower(pathinfo($_FILES['house_image']['name'], PATHINFO_EXTENSION));
-            $allowed_exts = array('png', 'jpg', 'jpeg', 'gif');
-
-            if (in_array($file_ext, $allowed_exts)) {
-                $filename = 'house_' . time() . '.' . $file_ext;
-                $target_path = $upload_dir . $filename;
-
-                if (move_uploaded_file($_FILES['house_image']['tmp_name'], $target_path)) {
-                    // File uploaded successfully
-                } else {
-                    flash_message('Fehler beim Hochladen der Datei', 'error');
-                    admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_add');
-                }
-            } else {
-                flash_message('Ungültiges Dateiformat. Nur PNG, JPG und GIF erlaubt.', 'error');
-                admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_add');
-            }
-        } else {
-            // No file uploaded, use placeholder
-            $filename = 'placeholder.png';
-        }
+        // Handle file upload (Endung, MIME-Typ und Größe laut Settings)
+        $filename = rpgmaps_acp_handle_upload('house_image', 'house', 'placeholder.png', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_add');
 
         $type_data = array(
             'name' => $db->escape_string($mybb->get_input('name')),
@@ -928,37 +900,8 @@ function rpgmaps_admin_house_types_edit()
     if ($mybb->request_method == 'post') {
         rpgmaps_acp_verify_key();
 
-        // Handle file upload if provided
-        $filename = $type['asset_filename']; // Keep existing filename by default
-
-        if (isset($_FILES['house_image']) && $_FILES['house_image']['error'] == UPLOAD_ERR_OK) {
-            $upload_dir = MYBB_ROOT . 'inc/plugins/rpgmaps/assets/houses/';
-            if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0755, true);
-            }
-
-            $file_ext = strtolower(pathinfo($_FILES['house_image']['name'], PATHINFO_EXTENSION));
-            $allowed_exts = array('png', 'jpg', 'jpeg', 'gif');
-
-            if (in_array($file_ext, $allowed_exts)) {
-                $new_filename = 'house_' . time() . '.' . $file_ext;
-                $target_path = $upload_dir . $new_filename;
-
-                if (move_uploaded_file($_FILES['house_image']['tmp_name'], $target_path)) {
-                    // Delete old file if it exists and is not placeholder
-                    if ($filename != 'placeholder.png' && file_exists($upload_dir . $filename)) {
-                        @unlink($upload_dir . $filename);
-                    }
-                    $filename = $new_filename;
-                } else {
-                    flash_message('Fehler beim Hochladen der Datei', 'error');
-                    admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_edit&id=' . $type_id);
-                }
-            } else {
-                flash_message('Ungültiges Dateiformat. Nur PNG, JPG und GIF erlaubt.', 'error');
-                admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_edit&id=' . $type_id);
-            }
-        }
+        // Handle file upload (Endung, MIME-Typ und Größe laut Settings)
+        $filename = rpgmaps_acp_handle_upload('house_image', 'house', $type['asset_filename'], 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_edit&id=' . $type_id);
 
         $type_data = array(
             'name' => $db->escape_string($mybb->get_input('name')),

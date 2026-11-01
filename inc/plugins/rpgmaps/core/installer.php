@@ -132,28 +132,6 @@ function rpgmaps_install_tables()
 }
 
 /**
- * Upgrade database schema
- * Adds new fields to existing tables if they don't exist
- */
-function rpgmaps_upgrade_tables()
-{
-    global $db;
-    
-    // Check if rotation column exists in buildplots table
-    if ($db->table_exists('rpgmaps_buildplots')) {
-        // Check if rotation column already exists
-        $query = $db->query("SHOW COLUMNS FROM `" . TABLE_PREFIX . "rpgmaps_buildplots` LIKE 'rotation'");
-        
-        if ($db->num_rows($query) == 0) {
-            // Add rotation column
-            $db->write_query("ALTER TABLE `" . TABLE_PREFIX . "rpgmaps_buildplots` 
-                ADD COLUMN `rotation` INT DEFAULT 0 COMMENT 'Rotation angle in degrees (0-360)' 
-                AFTER `h`");
-        }
-    }
-}
-
-/**
  * Uninstall database tables
  */
 function rpgmaps_uninstall_tables()
@@ -174,424 +152,6 @@ function rpgmaps_uninstall_tables()
         if ($db->table_exists($table)) {
             $db->drop_table($table);
         }
-    }
-}
-
-/**
- * Install plugin templates
- */
-function rpgmaps_install_templates()
-{
-    global $db;
-
-    // Templates to install
-    $templates = [
-        // Frontend templates
-        'rpgmaps_frontend' => $db->escape_string('<html>
-<head>
-<title>{$mybb->settings[\'bbname\']} - {$rpgmaps_map_title}</title>
-{$headerinclude}
-</head>
-<body>
-{$header}
-{$rpgmaps_notification}
-<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
-<tr>
-<td class="thead"><strong>{$rpgmaps_map_title}</strong></td>
-</tr>
-<tr>
-<td class="trow1">
-<p class="smalltext">{$rpgmaps_map_description}</p>
-<div class="rpgmaps-container" {$rpgmaps_container_attributes}>
-    <div class="rpgmaps-map-wrapper" id="rpgmaps-map-{$rpgmaps_map_id}">
-        <img src="{$rpgmaps_map_image}" alt="{$rpgmaps_map_title}" class="rpgmaps-map-image">
-        <div id="rpgmaps-overlay-{$rpgmaps_map_id}" class="rpgmaps-overlay">
-            {$rpgmaps_plot_overlays}
-        </div>
-    </div>
-</div>
-</td>
-</tr>
-</table>
-<br />
-
-<div id="rpgmaps-modal-build" class="rpgmaps-modal">
-    <div class="modal-content tborder trow1">
-        <div class="rpgmaps-modal-header thead">
-            <strong>Haus bauen</strong>
-            <span class="close">&times;</span>
-        </div>
-        <div class="rpgmaps-modal-body">
-            <form id="form-build-house" method="post">
-                <input type="hidden" name="action" value="build_house">
-                <input type="hidden" name="plot_id" id="build-plot-id" value="">
-                <div class="form-group">
-                    <label>Haustyp w&auml;hlen:</label>
-                    <select name="type_id" id="house-type-select" required>
-                        {$rpgmaps_house_type_options}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Maximale Bewohner:</label>
-                    <input type="number" name="max_occupants" id="max-occupants-input" min="1" max="20" value="5" required>
-                </div>
-                <div class="form-group">
-                    <label>Beschreibung (optional):</label>
-                    <textarea name="description" id="house-description-input" rows="3" placeholder="Beschreibe dein Haus..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Hausname (optional):</label>
-                    <input type="text" name="house_name" id="house-name-input" maxlength="255" placeholder="z. B. Eichenhof">
-                </div>
-                <button type="submit" class="button">Bauantrag einreichen</button>
-            </form>
-        </div>
-    </div>
-</div>
-
-{$footer}
-</body>
-</html>'),
-
-        'rpgmaps_map_list' => $db->escape_string('<html>
-<head>
-<title>{$mybb->settings[\'bbname\']} - {$lang->rpgmaps_maps}</title>
-{$headerinclude}
-</head>
-<body>
-{$header}
-{$rpgmaps_notification}
-<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
-<tr>
-<td class="thead"><strong>{$lang->rpgmaps_maps}</strong></td>
-</tr>
-{$rpgmaps_map_list}
-</table>
-<br />
-{$footer}
-</body>
-</html>'),
-
-        'rpgmaps_map_row' => $db->escape_string('<tr>
-<td class="trow1">
-<strong><a href="{$rpgmaps_map_url}">{$rpgmaps_map_title}</a></strong>
-<div class="smalltext">{$rpgmaps_map_description}</div>
-<a href="{$rpgmaps_map_url}" class="button">{$lang->rpgmaps_view_map}</a>
-<br /><br />
-</td>
-</tr>'),
-
-        'rpgmaps_tooltip' => $db->escape_string('<div class="rpgmaps-tooltip" id="rpgmaps-tooltip-{$rpgmaps_tooltip_id}">
-    <div class="tooltip-header">
-        <h3>{$rpgmaps_plot_name}</h3>
-        <a href="javascript:void(0);" class="tooltip-close" onclick="rpgmaps_hide_tooltip();">&times;</a>
-    </div>
-    <div class="tooltip-body">
-        {$rpgmaps_tooltip_content}
-    </div>
-</div>'),
-
-        'rpgmaps_modal_build' => $db->escape_string('<div id="rpgmaps-modal-build" class="rpgmaps-modal">
-    <div class="modal-content tborder trow1">
-        <div class="rpgmaps-modal-header thead">
-            <strong>{$rpgmaps_build_house}</strong>
-            <span class="close" onclick="rpgmaps_close_modal(\'build\')">&times;</span>
-        </div>
-        <div class="rpgmaps-modal-body">
-            <form id="form-build-house" method="post">
-                <input type="hidden" name="action" value="rpgmaps">
-                <input type="hidden" name="sub" value="build_house">
-                <input type="hidden" name="plot_id" id="build-plot-id" value="">
-                <div class="form-group">
-                    <label>{$rpgmaps_select_house_type}</label>
-                    <select name="type_id" id="house-type-select" required>
-                        <option value="">{$rpgmaps_choose_type}</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary">{$rpgmaps_submit_build_request}</button>
-            </form>
-        </div>
-    </div>
-</div>'),
-
-        'modcp_nav_rpgmaps' => $db->escape_string('<tr><td class="trow1 smalltext"><a href="modcp.php?action=rpgmaps" class="modcp_nav_item modcp_nav_rpgmaps">RPG Maps{$count_badge}</a></td></tr>'),
-
-        'modcp_rpgmaps_pending' => $db->escape_string('<html>
-<head>
-<title>{$mybb->settings[\'bbname\']} - {$lang->modcp} - RPG Maps</title>
-{$headerinclude}
-</head>
-<body>
-{$header}
-<table width="100%" border="0" align="center">
-<tr>
-{$modcp_nav}
-<td valign="top">
-<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
-<tr>
-<td class="thead" colspan="5"><strong>RPG Maps - Ausstehende Bauanträge</strong></td>
-</tr>
-<tr>
-<td class="tcat" width="15%"><strong>Typ</strong></td>
-<td class="tcat" width="20%"><strong>Benutzer</strong></td>
-<td class="tcat" width="30%"><strong>Ort</strong></td>
-<td class="tcat" width="20%"><strong>Erstellt</strong></td>
-<td class="tcat rpgmaps-action-buttons" width="15%"><strong>Aktionen</strong></td>
-</tr>
-{$action_rows}
-</table>
-</td>
-</tr>
-</table>
-{$footer}
-</body>
-</html>'),
-
-        // Navigation item for the header
-        'rpgmaps_nav' => $db->escape_string('<li {$rpgmaps_nav_active}><a href="{$mybb->settings[\'bburl\']}/rpgmaps.php">{$lang->rpgmaps_nav_maps}</a></li>'),
-
-        // ACP templates will be in admin modules
-    ];
-
-    rpgmaps_add_nav_to_header();
-
-    foreach ($templates as $name => $template) {
-        // Check if template group exists for rpgmaps
-        $query = $db->simple_select('templategroups', '*', "prefix = 'rpgmaps'");
-        $group = $db->fetch_array($query);
-
-        if (!$group) {
-            // Create template group if it doesn't exist
-            $insert = [
-                'prefix' => 'rpgmaps',
-                'title' => 'RPG Maps Plugin',
-            ];
-            $db->insert_query('templategroups', $insert);
-
-            // Get the newly created group ID
-            $query = $db->simple_select('templategroups', 'gid', "prefix = 'rpgmaps'");
-            $group = $db->fetch_array($query);
-        }
-
-        // Check if template already exists
-        $existing = $db->simple_select('templates', '*', "title = '" . $db->escape_string($name) . "'");
-        if (!$db->fetch_array($existing)) {
-            // Insert template
-            $insert = [
-                'title' => $name,
-                'template' => $template,
-                'sid' => -1,
-                'version' => 1833,
-                'dateline' => TIME_NOW,
-            ];
-            $db->insert_query('templates', $insert);
-        }
-    }
-}
-
-/**
- * Uninstall plugin templates
- */
-function rpgmaps_uninstall_templates()
-{
-    global $db;
-
-    rpgmaps_remove_nav_from_header();
-
-    // Delete templates
-    $db->delete_query('templates', "title LIKE 'rpgmaps_%'");
-
-    // Delete template group
-    $db->delete_query('templategroups', "prefix = 'rpgmaps'");
-}
-
-/**
- * Insert {$rpgmaps_nav} before the search toplink in the header template.
- * Falls back to inserting before the first </ul> if the search link is not found.
- */
-function rpgmaps_add_nav_to_header()
-{
-    global $db;
-
-    $query = $db->simple_select('templates', 'template', "title = 'header' AND sid = '-2'");
-    $row = $db->fetch_array($query);
-
-    if (!$row) {
-        // Master template (sid = -1) as fallback
-        $query = $db->simple_select('templates', 'template', "title = 'header' AND sid = '-1'");
-        $row = $db->fetch_array($query);
-    }
-
-    if (!$row || strpos($row['template'], '{$rpgmaps_nav}') !== false) {
-        return; // Not found or already inserted
-    }
-
-    $content = $row['template'];
-
-    // Find the <li> that contains toplinks_search and insert before it
-    $search_pos = strpos($content, 'toplinks_search');
-    if ($search_pos !== false) {
-        $li_pos = strrpos(substr($content, 0, $search_pos), '<li');
-        if ($li_pos !== false) {
-            $content = substr($content, 0, $li_pos) . '{$rpgmaps_nav}' . "\n" . substr($content, $li_pos);
-        }
-    } else {
-        // Fallback: insert before first </ul>
-        $ul_pos = strpos($content, '</ul>');
-        if ($ul_pos !== false) {
-            $content = substr($content, 0, $ul_pos) . '{$rpgmaps_nav}' . "\n" . substr($content, $ul_pos);
-        }
-    }
-
-    $db->update_query('templates', array('template' => $db->escape_string($content)), "title = 'header' AND sid = '-2'");
-}
-
-/**
- * Remove {$rpgmaps_nav} from the header template.
- */
-function rpgmaps_remove_nav_from_header()
-{
-    global $db;
-
-    $query = $db->simple_select('templates', 'template', "title = 'header' AND sid = '-2'");
-    $row = $db->fetch_array($query);
-
-    if (!$row || strpos($row['template'], '{$rpgmaps_nav}') === false) {
-        return;
-    }
-
-    $content = str_replace('{$rpgmaps_nav}' . "\n", '', $row['template']);
-    $content = str_replace('{$rpgmaps_nav}', '', $content);
-
-    $db->update_query('templates', array('template' => $db->escape_string($content)), "title = 'header' AND sid = '-2'");
-}
-
-/**
- * Update plugin templates (for existing installations)
- */
-function rpgmaps_update_templates()
-{
-    global $db;
-
-    rpgmaps_add_nav_to_header();
-
-    $new_frontend = $db->escape_string('<html>
-<head>
-<title>{$mybb->settings[\'bbname\']} - {$rpgmaps_map_title}</title>
-{$headerinclude}
-</head>
-<body>
-{$header}
-{$rpgmaps_notification}
-<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
-<tr>
-<td class="thead"><strong>{$rpgmaps_map_title}</strong></td>
-</tr>
-<tr>
-<td class="trow1">
-<p class="smalltext">{$rpgmaps_map_description}</p>
-<div class="rpgmaps-container" {$rpgmaps_container_attributes}>
-    <div class="rpgmaps-map-wrapper" id="rpgmaps-map-{$rpgmaps_map_id}">
-        <img src="{$rpgmaps_map_image}" alt="{$rpgmaps_map_title}" class="rpgmaps-map-image">
-        <div id="rpgmaps-overlay-{$rpgmaps_map_id}" class="rpgmaps-overlay">
-            {$rpgmaps_plot_overlays}
-        </div>
-    </div>
-</div>
-</td>
-</tr>
-</table>
-<br />
-
-<div id="rpgmaps-modal-build" class="rpgmaps-modal">
-    <div class="modal-content tborder trow1">
-        <div class="rpgmaps-modal-header thead">
-            <strong>Haus bauen</strong>
-            <span class="close">&times;</span>
-        </div>
-        <div class="rpgmaps-modal-body">
-            <form id="form-build-house" method="post">
-                <input type="hidden" name="action" value="build_house">
-                <input type="hidden" name="plot_id" id="build-plot-id" value="">
-                <div class="form-group">
-                    <label>Haustyp w&auml;hlen:</label>
-                    <select name="type_id" id="house-type-select" required>
-                        {$rpgmaps_house_type_options}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Maximale Bewohner:</label>
-                    <input type="number" name="max_occupants" id="max-occupants-input" min="1" max="20" value="5" required>
-                </div>
-                <div class="form-group">
-                    <label>Beschreibung (optional):</label>
-                    <textarea name="description" id="house-description-input" rows="3" placeholder="Beschreibe dein Haus..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Hausname (optional):</label>
-                    <input type="text" name="house_name" id="house-name-input" maxlength="255" placeholder="z. B. Eichenhof">
-                </div>
-                <button type="submit" class="button">Bauantrag einreichen</button>
-            </form>
-        </div>
-    </div>
-</div>
-
-{$footer}
-</body>
-</html>');
-
-    $new_map_list = $db->escape_string('<html>
-<head>
-<title>{$mybb->settings[\'bbname\']} - {$lang->rpgmaps_maps}</title>
-{$headerinclude}
-</head>
-<body>
-{$header}
-{$rpgmaps_notification}
-<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
-<tr>
-<td class="thead"><strong>{$lang->rpgmaps_maps}</strong></td>
-</tr>
-{$rpgmaps_map_list}
-</table>
-<br />
-{$footer}
-</body>
-</html>');
-
-    $db->update_query('templates', array('template' => $new_frontend), "title = 'rpgmaps_frontend'");
-    $db->update_query('templates', array('template' => $new_map_list), "title = 'rpgmaps_map_list'");
-
-    // Add rpgmaps_nav template if it doesn't exist yet (for installations before nav feature)
-    $existing = $db->simple_select('templates', 'title', "title = 'rpgmaps_nav'");
-    if (!$db->fetch_array($existing)) {
-        $db->insert_query('templates', array(
-            'title' => 'rpgmaps_nav',
-            'template' => $db->escape_string('<li {$rpgmaps_nav_active}><a href="{$mybb->settings[\'bburl\']}/rpgmaps.php">{$lang->rpgmaps_nav_maps}</a></li>'),
-            'sid' => -1,
-            'version' => 1833,
-            'dateline' => TIME_NOW,
-        ));
-    }
-
-    // Add rpgmaps_map_row template if it doesn't exist yet (map list row extracted from PHP)
-    $existing = $db->simple_select('templates', 'title', "title = 'rpgmaps_map_row'");
-    if (!$db->fetch_array($existing)) {
-        $db->insert_query('templates', array(
-            'title' => 'rpgmaps_map_row',
-            'template' => $db->escape_string('<tr>
-<td class="trow1">
-<strong><a href="{$rpgmaps_map_url}">{$rpgmaps_map_title}</a></strong>
-<div class="smalltext">{$rpgmaps_map_description}</div>
-<a href="{$rpgmaps_map_url}" class="button">{$lang->rpgmaps_view_map}</a>
-<br /><br />
-</td>
-</tr>'),
-            'sid' => -1,
-            'version' => 1833,
-            'dateline' => TIME_NOW,
-        ));
     }
 }
 
@@ -624,10 +184,10 @@ function rpgmaps_update_tables()
         $db->add_column('rpgmaps_houses', 'description', "TEXT AFTER `max_occupants`");
     }
 
-        // Ensure house_name column exists on houses table
-        if (!$db->field_exists('house_name', 'rpgmaps_houses')) {
-            $db->add_column('rpgmaps_houses', 'house_name', "VARCHAR(255) DEFAULT '' AFTER `description`");
-        }
+    // Ensure house_name column exists on houses table
+    if (!$db->field_exists('house_name', 'rpgmaps_houses')) {
+        $db->add_column('rpgmaps_houses', 'house_name', "VARCHAR(255) DEFAULT '' AFTER `description`");
+    }
 }
 
 /**
@@ -720,25 +280,6 @@ function rpgmaps_uninstall_settings()
 }
 
 /**
- * Install plugin hooks
- */
-function rpgmaps_install_hooks()
-{
-    global $db;
-
-    // Hooks are registered in the main plugin file via $plugins->add_hook()
-    // This function is here for future reference if we need custom hook registration
-}
-
-/**
- * Uninstall plugin hooks
- */
-function rpgmaps_uninstall_hooks()
-{
-    // Hooks are automatically removed when plugin is disabled
-}
-
-/**
  * Helper: load MyAlerts classes if available.
  * @return bool True if classes are available, false otherwise.
  */
@@ -817,99 +358,162 @@ function rpgmaps_uninstall_alert_type()
 }
 
 /**
- * Update CSS stylesheet in DB (for existing installations)
+ * Templates aus inc/plugins/rpgmaps/templates/*.tpl in die Datenbank laden.
+ * Dateiname ohne .tpl = Templatetitel. Idempotent: vorhandene Master-Templates werden ersetzt.
  */
-function rpgmaps_update_css()
+function rpgmaps_install_templates()
 {
     global $db;
 
-    require_once MYBB_ADMIN_DIR . "inc/functions_themes.php";
+    $group = $db->fetch_array($db->simple_select('templategroups', 'gid', "prefix = 'rpgmaps'"));
+    if (!$group) {
+        $db->insert_query('templategroups', [
+            'prefix' => 'rpgmaps',
+            'title'  => 'RPG Maps',
+            'isdefault' => 0,
+        ]);
+    }
 
-    $css_file = MYBB_ROOT . 'inc/plugins/rpgmaps/assets/rpgmaps.css';
-    if (!file_exists($css_file)) {
+    $template_dir = MYBB_ROOT . 'inc/plugins/rpgmaps/templates/';
+    $files = glob($template_dir . '*.tpl');
+    if (!is_array($files)) {
         return;
     }
 
-    $css_content = file_get_contents($css_file);
-    if ($css_content === false) {
-        return;
-    }
+    foreach ($files as $file) {
+        $title = basename($file, '.tpl');
+        $content = (string)file_get_contents($file);
 
-    $existing = $db->simple_select('themestylesheets', 'sid', "name = 'rpgmaps.css'");
-    if ($db->num_rows($existing) > 0) {
-        $db->update_query('themestylesheets', [
-            'stylesheet'   => $db->escape_string($css_content),
-            'lastmodified' => TIME_NOW,
-        ], "name = 'rpgmaps.css'");
-    } else {
-        rpgmaps_install_css();
-        return;
-    }
-
-    $tids = $db->simple_select('themes', 'tid');
-    while ($theme = $db->fetch_array($tids)) {
-        update_theme_stylesheet_list($theme['tid']);
+        $db->delete_query('templates', "title = '" . $db->escape_string($title) . "' AND sid = -1");
+        $db->insert_query('templates', [
+            'title'    => $db->escape_string($title),
+            'template' => $db->escape_string($content),
+            'sid'      => -1,
+            'version'  => '',
+            'dateline' => TIME_NOW,
+        ]);
     }
 }
 
 /**
- * Install CSS stylesheet
+ * Alle Plugin-Templates entfernen (Master und themespezifische Kopien).
+ */
+function rpgmaps_uninstall_templates()
+{
+    global $db;
+
+    $db->delete_query('templates', "title LIKE 'rpgmaps\\_%'");
+    // Altlasten aus Versionen <= 1.1.0
+    $db->delete_query('templates', "title IN ('modcp_nav_rpgmaps', 'modcp_rpgmaps_pending', 'rpgmaps_tooltip', 'rpgmaps_modal_build')");
+    $db->delete_query('templategroups', "prefix = 'rpgmaps'");
+}
+
+/**
+ * {$rpgmaps_nav} in das header-Template aller Template-Sets einfügen (vor dem Such-Link).
+ */
+function rpgmaps_add_nav_to_header()
+{
+    require_once MYBB_ROOT . 'inc/adminfunctions_templates.php';
+
+    // Idempotent: erst entfernen, dann neu einfügen
+    rpgmaps_remove_nav_from_header();
+
+    // MyBB 1.8 (ab 1.8.?): Menüpunkte als eigene Variablen
+    $inserted = find_replace_templatesets('header', '#(\{\$menu_search\})#', "{\$rpgmaps_nav}\n\\1");
+
+    // Ältere/angepasste Header: vor dem <li> mit dem Such-Link
+    if (!$inserted) {
+        $inserted = find_replace_templatesets('header', '#(<li[^>]*>\s*<a[^>]*search\.php)#i', "{\$rpgmaps_nav}\n\\1");
+    }
+
+    // Letzter Fallback: vor dem ersten </ul>
+    if (!$inserted) {
+        find_replace_templatesets('header', '#(</ul>)#i', "{\$rpgmaps_nav}\n\\1", 1, false, 1);
+    }
+}
+
+/**
+ * {$rpgmaps_nav} aus dem header-Template aller Template-Sets entfernen.
+ */
+function rpgmaps_remove_nav_from_header()
+{
+    global $db;
+
+    require_once MYBB_ROOT . 'inc/adminfunctions_templates.php';
+
+    find_replace_templatesets('header', '#\{\$rpgmaps_nav\}(\r?\n)?#', '', 0);
+
+    // Versionen <= 1.1.0 haben direkt das Master-Template (sid = -2) geändert
+    $query = $db->simple_select('templates', 'tid, template', "title = 'header' AND sid = -2");
+    while ($row = $db->fetch_array($query)) {
+        $clean = preg_replace('#\{\$rpgmaps_nav\}(\r?\n)?#', '', $row['template']);
+        if ($clean !== $row['template']) {
+            $db->update_query('templates', ['template' => $db->escape_string($clean)], 'tid = ' . (int)$row['tid']);
+        }
+    }
+}
+
+/**
+ * Stylesheet rpgmaps.css anlegen bzw. aktualisieren (Master-Theme, wird vererbt).
  */
 function rpgmaps_install_css()
 {
     global $db;
 
-    require_once MYBB_ADMIN_DIR . "inc/functions_themes.php";
+    require_once MYBB_ADMIN_DIR . 'inc/functions_themes.php';
 
-    // Read CSS content from file
     $css_file = MYBB_ROOT . 'inc/plugins/rpgmaps/assets/rpgmaps.css';
-    if (!file_exists($css_file)) {
-        return;  // CSS file not found
+    if (!is_file($css_file)) {
+        return;
+    }
+    $css = $db->escape_string((string)file_get_contents($css_file));
+
+    $existing = $db->fetch_array($db->simple_select('themestylesheets', 'sid', "name = 'rpgmaps.css' AND tid = 1"));
+    if ($existing) {
+        $sid = (int)$existing['sid'];
+        $db->update_query('themestylesheets', [
+            'stylesheet'   => $css,
+            'lastmodified' => TIME_NOW,
+        ], 'sid = ' . $sid, 1);
+    } else {
+        $sid = (int)$db->insert_query('themestylesheets', [
+            'name'         => 'rpgmaps.css',
+            'tid'          => 1,
+            'attachedto'   => '',
+            'stylesheet'   => $css,
+            'cachefile'    => 'rpgmaps.css',
+            'lastmodified' => TIME_NOW,
+        ]);
     }
 
-    $css_content = file_get_contents($css_file);
-    if ($css_content === false) {
-        return;  // Could not read CSS file
+    // Cache-Datei schreiben; schlägt das fehl (Rechte), über css.php ausliefern
+    if (!cache_stylesheet(1, 'rpgmaps.css', (string)file_get_contents($css_file))) {
+        $db->update_query('themestylesheets', ['cachefile' => 'css.php?stylesheet=' . $sid], 'sid = ' . $sid, 1);
     }
 
-    $stylesheet = [
-        'name' => 'rpgmaps.css',
-        'tid' => 1,
-        'attachedto' => '',
-        'stylesheet' => $db->escape_string($css_content),
-        'cachefile' => 'rpgmaps.css',
-        'lastmodified' => TIME_NOW,
-    ];
-
-    $sid = $db->insert_query("themestylesheets", $stylesheet);
-    $db->update_query("themestylesheets", array("cachefile" => "rpgmaps.css"), "sid = '" . $sid . "'", 1);
-
-    $tids = $db->simple_select("themes", "tid");
-    while ($theme = $db->fetch_array($tids)) {
-        update_theme_stylesheet_list($theme['tid']);
+    $themes = $db->simple_select('themes', 'tid');
+    while ($theme = $db->fetch_array($themes)) {
+        update_theme_stylesheet_list((int)$theme['tid']);
     }
-
 }
 
 /**
- * Uninstall CSS stylesheet
+ * Stylesheet rpgmaps.css aus allen Themes entfernen.
  */
 function rpgmaps_uninstall_css()
 {
     global $db;
 
-    require_once MYBB_ADMIN_DIR . "inc/functions_themes.php";
+    require_once MYBB_ADMIN_DIR . 'inc/functions_themes.php';
 
-    // Remove stylesheets from all themes
     $db->delete_query('themestylesheets', "name = 'rpgmaps.css'");
 
-    // Stylesheet-Listen und Cache-Dateien aller Themes neu aufbauen (debugging.md #10)
-    $tids = $db->simple_select('themes', 'tid');
-    while ($theme = $db->fetch_array($tids)) {
+    $themes = $db->simple_select('themes', 'tid');
+    while ($theme = $db->fetch_array($themes)) {
         $cache_file = MYBB_ROOT . 'cache/themes/theme' . (int)$theme['tid'] . '/rpgmaps.css';
         if (is_file($cache_file)) {
             unlink($cache_file);
         }
-        update_theme_stylesheet_list($theme['tid']);
+        update_theme_stylesheet_list((int)$theme['tid']);
     }
 }

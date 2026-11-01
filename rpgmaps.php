@@ -10,7 +10,7 @@
 define('IN_MYBB', 1);
 define('THIS_SCRIPT', 'rpgmaps.php');
 
-$templatelist = 'rpgmaps_frontend,rpgmaps_tooltip,rpgmaps_modal_build,rpgmaps_map_list,rpgmaps_map_row';
+$templatelist = 'rpgmaps_frontend,rpgmaps_map_list,rpgmaps_map_row';
 
 require_once "./global.php";
 

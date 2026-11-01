@@ -1,0 +1,1 @@
+<tr><td class="trow1 smalltext"><a href="modcp.php?action=rpgmaps" class="modcp_nav_item modcp_nav_rpgmaps">{$lang->rpgmaps_modcp_nav}{$count_badge}</a></td></tr>
