@@ -174,12 +174,12 @@ function rpgmaps_ajax_get_map()
  */
 function rpgmaps_ajax_build_request($manager, $security)
 {
+    global $mybb;
     // Check if user is logged in
     if (!$security->isUserLoggedIn()) {
         rpgmaps_json_output(['success' => false, 'message' => 'You must be logged in', 'error' => 'You must be logged in']);
     }
     
-    global $mybb;
     $plot_id       = $mybb->get_input('plot_id',       MyBB::INPUT_INT);
     $house_type_id = $mybb->get_input('house_type_id', MyBB::INPUT_INT);
     $max_occupants = $mybb->get_input('max_occupants', MyBB::INPUT_INT) ?: 5;
@@ -217,12 +217,12 @@ function rpgmaps_ajax_build_request($manager, $security)
  */
 function rpgmaps_ajax_move_in_request($manager, $security)
 {
+    global $mybb;
     // Check if user is logged in
     if (!$security->isUserLoggedIn()) {
         rpgmaps_json_output(['success' => false, 'message' => 'You must be logged in', 'error' => 'You must be logged in']);
     }
     
-    global $mybb;
     $house_id = $mybb->get_input('house_id', MyBB::INPUT_INT);
     $user_id  = $security->getCurrentUserID();
 
@@ -243,12 +243,12 @@ function rpgmaps_ajax_move_in_request($manager, $security)
  */
 function rpgmaps_ajax_move_out_request($manager, $security)
 {
+    global $mybb;
     // Check if user is logged in
     if (!$security->isUserLoggedIn()) {
         rpgmaps_json_output(['success' => false, 'message' => 'You must be logged in', 'error' => 'You must be logged in']);
     }
     
-    global $mybb;
     $house_id = $mybb->get_input('house_id', MyBB::INPUT_INT);
     $user_id  = $security->getCurrentUserID();
 
@@ -331,12 +331,12 @@ function rpgmaps_ajax_get_house_info()
  */
 function rpgmaps_ajax_update_description($manager, $security)
 {
+    global $mybb;
     // Check if user is logged in
     if (!$security->isUserLoggedIn()) {
         rpgmaps_json_output(['success' => false, 'message' => 'You must be logged in', 'error' => 'You must be logged in']);
     }
     
-    global $mybb;
     $house_id    = $mybb->get_input('house_id',    MyBB::INPUT_INT);
     $description = trim($mybb->get_input('description', MyBB::INPUT_STRING));
     $user_id     = $security->getCurrentUserID();
@@ -382,12 +382,12 @@ function rpgmaps_ajax_update_description($manager, $security)
  */
 function rpgmaps_ajax_update_house_settings($manager, $security)
 {
+    global $mybb;
     // Check if user is logged in
     if (!$security->isUserLoggedIn()) {
         rpgmaps_json_output(['success' => false, 'message' => 'You must be logged in', 'error' => 'You must be logged in']);
     }
 
-    global $mybb;
     $house_id      = $mybb->get_input('house_id',      MyBB::INPUT_INT);
     $house_type_id = $mybb->get_input('house_type_id', MyBB::INPUT_INT);
     $max_occupants = $mybb->get_input('max_occupants', MyBB::INPUT_INT);

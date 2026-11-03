@@ -2,6 +2,27 @@
 
 All notable changes to RPG Maps will be documented here.
 
+## [Unreleased]
+
+### Security
+- **ACP actions without CSRF protection.** Deleting plots and house types and approving or
+  rejecting pending actions ran on plain GET links without any post-key check. The links now
+  carry `my_post_key`, and every ACP write handler checks it with
+  `rpgmaps_acp_verify_key()` (in the ACP `verify_post_check()` does not abort on its own).
+- **AJAX token was the session ID.** The frontend CSRF token exposed the MyBB session ID in
+  the page HTML. It now uses MyBB's post key (`$mybb->post_code` / `verify_post_check()`).
+- ACP delete confirmations use `json_encode()` for the JavaScript string.
+
+### Fixed
+- `inc/plugins/rpgmaps/templates/frontend.php` did not parse (unescaped quote in a template
+  constant); the file is not included anywhere at the moment.
+- “Delete map” confirmation page crashed because `$page` was not declared global.
+- Direct `$mybb->input[...]` reads replaced by `get_input()`; `global` declarations moved to
+  the start of their functions.
+
+### Changed
+- Plugin website set; README install step reads “Install & Activate”.
+
 ## [1.1.0] – 2026-03-28
 
 ### Added

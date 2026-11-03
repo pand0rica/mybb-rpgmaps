@@ -26,7 +26,7 @@ if (!isset($mybb->settings['rpgmaps_enabled']) || $mybb->settings['rpgmaps_enabl
 $action = 'rpgmaps';
 
 // Handle AJAX requests
-if (isset($mybb->input['action']) && $mybb->input['action'] == 'ajax_rpgmaps') {
+if ($mybb->get_input('action') === 'ajax_rpgmaps') {
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/ajax.php';
     $sub = $mybb->get_input('sub');
     rpgmaps_handle_ajax($sub);
@@ -51,7 +51,7 @@ $headerinclude .= '<script src="' . $mybb->settings['bburl'] . '/inc/plugins/rpg
 $rpgmaps_notification = '';
 
 // Get the map ID from query string
-$map_id = isset($mybb->input['map_id']) ? (int)$mybb->input['map_id'] : 0;
+$map_id = $mybb->get_input('map_id', MyBB::INPUT_INT);
 
 // Page title
 add_breadcrumb($lang->rpgmaps_maps, "rpgmaps.php");

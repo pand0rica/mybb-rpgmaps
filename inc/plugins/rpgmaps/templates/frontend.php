@@ -22,7 +22,7 @@ define('RPGMAPS_FRONTEND_TEMPLATE', '
     <h1>{$rpgmaps_map_title}</h1>
     <p>{$rpgmaps_map_description}</p>
     
-    <div class="rpgmaps-map-wrapper" id="rpgmaps-map-{$rpgmaps_map_id}" data-map-id="{$rpgmaps_map_id}" data-csrf-token="{$rpgmaps_csrf_token}" data-logged-in="{$rpgmaps_is_logged_in}" data-lang="{$rpgmaps_lang_json}" data-ajax-url="{$mybb->settings['bburl']}/rpgmaps.php">
+    <div class="rpgmaps-map-wrapper" id="rpgmaps-map-{$rpgmaps_map_id}" data-map-id="{$rpgmaps_map_id}" data-csrf-token="{$rpgmaps_csrf_token}" data-logged-in="{$rpgmaps_is_logged_in}" data-lang="{$rpgmaps_lang_json}" data-ajax-url="{$mybb->settings[\'bburl\']}/rpgmaps.php">
         <img src="{$rpgmaps_map_image}" alt="{$rpgmaps_map_title}" class="rpgmaps-map-image">
         <div id="rpgmaps-overlay-{$rpgmaps_map_id}" class="rpgmaps-overlay">
             {$rpgmaps_plot_overlays}

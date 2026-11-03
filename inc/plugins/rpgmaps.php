@@ -22,7 +22,7 @@ function rpgmaps_info()
     return [
         'name' => 'RPG Maps Plugin',
         'description' => 'Manage fantasy city maps, building plots, and house ownership with administrative approval system',
-        'website' => '',
+        'website' => 'https://github.com/pand0rica/mybb-rpgmaps',
         'author' => 'pand0rica',
         'authorsite' => 'https://github.com/pand0rica',
         'version' => '1.1.0',

@@ -316,6 +316,7 @@ class RPGMapsManager
      */
     public function approveBuildRequest($action_id, $admin_id, $admin_note = '')
     {
+        global $db;
         // Get action
         $action = $this->db->getActionById($action_id);
         if (!$action || $action['action_type'] !== 'build' || $action['status'] !== 'pending') {
@@ -379,7 +380,6 @@ class RPGMapsManager
         }
 
         // Create house with requested max_occupants, selected type, and description
-        global $db;
         $house_data = [
             'plot_id' => $plot_id,
             'type_id' => $house_type_id,
