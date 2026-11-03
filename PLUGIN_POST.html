@@ -1,0 +1,99 @@
+[size=x-large][b]RPG Maps[/b][/size]
+[i]Version 1.1.0[/i] – Interaktive Karten für dein RPG-Forum, auf denen Charaktere Häuser bauen, einziehen und ausziehen.
+
+[size=large][b]Worum geht's?[/b][/size]
+
+Wo wohnt eigentlich wer? In vielen Foren steht das in langen Listen oder gar nicht. RPG Maps legt eine Karte deiner Stadt oder Welt ins Forum, auf der Grundstücke markiert sind. Mitglieder beantragen dort ein Haus, ziehen bei anderen ein oder wieder aus, das Team gibt die Anträge frei – und alle sehen auf einen Blick, wer wo lebt.
+
+[size=large][b]Highlights[/b][/size]
+
+[list]
+[*] Bildbasierte Karten mit anklickbaren Grundstücken, auch auf dem Handy
+[*] Hausbau, Einzug und Auszug per Antrag mit Freigabe durch das Team
+[*] Häuser mit Namen, Beschreibung, Haustyp und maximaler Bewohnerzahl
+[*] Eigene Haustypen mit Bildern
+[/list]
+
+[size=large][b]Was das Plugin alles kann[/b][/size]
+
+[b]Für Mitglieder[/b]
+[list]
+[*][b]Kartenansicht[/b] – Eine Übersicht aller Karten und pro Karte das Bild mit allen Grundstücken. Ein Klick auf ein Grundstück zeigt, ob es frei ist oder wer dort wohnt. [i](rpgmaps.php)[/i]
+[*][b]Haus bauen[/b] – Auf einem freien Grundstück beantragst du ein Haus mit Haustyp, Bewohnerzahl und Beschreibung. [i](rpgmaps.php)[/i]
+[*][b]Ein- und ausziehen[/b] – Bei bestehenden Häusern beantragst du den Einzug oder Auszug. [i](rpgmaps.php)[/i]
+[*][b]Haus pflegen[/b] – Als Besitzer*in änderst du Hausname, Beschreibung (MyCode), Haustyp und Bewohnerzahl. [i](rpgmaps.php)[/i]
+[/list]
+
+[b]Für Team & Moderation[/b]
+[list]
+[*][b]Anträge im ModCP[/b] – Karten und Häuser ansehen sowie Bauanträge freigeben oder ablehnen. [i](ModCP → RPG Maps)[/i]
+[/list]
+
+[b]Für Administratoren[/b]
+[list]
+[*][b]Karten verwalten[/b] – Karten mit Titel und Bild anlegen, bearbeiten und löschen. [i](ACP → Werkzeuge → RPG Maps)[/i]
+[*][b]Grundstücke setzen[/b] – Grundstücke prozentgenau auf der Karte platzieren, damit sie bei jeder Bildschirmgröße passen. [i](ACP → RPG Maps → Grundstücke verwalten)[/i]
+[*][b]Haustypen[/b] – Gebäudetypen mit Bild und Standard-Bewohnerzahl. [i](ACP → RPG Maps → Haustypen)[/i]
+[*][b]Offene Anträge[/b] – Alle Bau-, Einzugs- und Auszugsanträge mit Freigeben und Ablehnen, optional mit Notiz. [i](ACP → RPG Maps → Offene Anträge)[/i]
+[/list]
+
+[b]Zusammenspiel mit anderen Plugins[/b]
+[list]
+[*][b]MyAlerts[/b] – Wird ein Bauantrag genehmigt, bekommt die Person einen Alert. Ohne MyAlerts entfällt nur die Benachrichtigung.
+[/list]
+
+[size=large][b]So sieht's aus[/b][/size]
+
+[img]https://raw.githubusercontent.com/pand0rica/mybb-rpgmaps/main/docs/screenshots/frontend-map-view.png[/img]
+[i]Eine Karte mit Grundstücken[/i]
+
+[img]https://raw.githubusercontent.com/pand0rica/mybb-rpgmaps/main/docs/screenshots/house-info-tooltip.png[/img]
+[i]Infos zu einem Haus[/i]
+
+[img]https://raw.githubusercontent.com/pand0rica/mybb-rpgmaps/main/docs/screenshots/acp-map-overview.png[/img]
+[i]Kartenübersicht im ACP[/i]
+
+[img]https://raw.githubusercontent.com/pand0rica/mybb-rpgmaps/main/docs/screenshots/acp-plot-editor.png[/img]
+[i]Grundstücke im ACP setzen[/i]
+
+[size=large][b]Einstellungen[/b][/size]
+
+[list]
+[*][b]Plugin aktivieren[/b] – Hauptschalter. [i](Standard: Ja)[/i]
+[*][b]Maximale Bildgröße[/b] – in KB für Karten- und Haustyp-Bilder. [i](Standard: 512)[/i]
+[*][b]Maximale Grundstücksgröße[/b] – in Pixeln. [i](Standard: 200)[/i]
+[*][b]Erlaubte Bildformate[/b] [i](Standard: png, jpg, jpeg, gif)[/i]
+[/list]
+
+[size=large][b]Voraussetzungen[/b][/size]
+
+[list]
+[*] MyBB 1.8.x
+[*] PHP 7.4 oder 8.x
+[*] Optional: MyAlerts
+[/list]
+
+[size=large][b]Installation[/b][/size]
+
+[list=1]
+[*] Dateien in das MyBB-Stammverzeichnis kopieren (Ordnerstruktur beibehalten)
+[*] ACP → Konfiguration → Plugins → RPG Maps → Installieren & aktivieren
+[*] ACP → Konfiguration → Einstellungen → RPG Maps → Einstellungen prüfen
+[*] ACP → Werkzeuge → RPG Maps → erste Karte anlegen und Grundstücke setzen
+[*] Optional: Haustypen anlegen
+[/list]
+
+[size=large][b]Grenzen & Ausblick[/b][/size]
+
+Grundstücke werden im ACP gesetzt, nicht per Klick auf der Karte im Forum. Die Oberfläche im ACP ist teilweise noch nur auf Englisch.
+
+[size=large][b]Download & Quellcode[/b][/size]
+
+&raquo; [url=https://github.com/pand0rica/mybb-rpgmaps]GitHub: pand0rica/mybb-rpgmaps[/url] – Änderungen im [url=https://github.com/pand0rica/mybb-rpgmaps/blob/main/CHANGELOG.md]Changelog[/url], Lizenz GPL-3.0
+
+[size=large][b]Unterstützung[/b][/size]
+
+<i class="cp cp-tea"></i> Wenn dir das Plugin gefällt, kannst du mir gerne einen Tee spendieren: [url=https://ko-fi.com/pand0rica]ko-fi.com/pand0rica[/url]
+
+[size=small]Fragen, Bugs oder Feature-Wünsche gerne als GitHub Issue melden oder hier im Thread.
+Ich freue mich, wenn ihr mir den Link dalasst, wo das Plugin verwendet wird.[/size]
