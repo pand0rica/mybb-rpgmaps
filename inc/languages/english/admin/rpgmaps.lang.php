@@ -124,3 +124,7 @@ $l['rpgmaps_default_currency'] = 'Default Currency';
 $l['rpgmaps_default_currency_desc'] = 'Name of currency for prices';
 $l['rpgmaps_enable_occupancy'] = 'Enable Occupancy System';
 $l['rpgmaps_enable_occupancy_desc'] = 'Allow multiple occupants per house';
+$l['rpgmaps_acp_plot_not_found'] = 'The plot could not be found.';
+$l['rpgmaps_acp_house_type_in_use'] = 'Cannot delete: houses still use this type.';
+$l['rpgmaps_acp_action_approved'] = 'Action approved.';
+$l['rpgmaps_acp_action_rejected'] = 'Action rejected.';

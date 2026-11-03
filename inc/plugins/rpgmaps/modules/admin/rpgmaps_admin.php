@@ -110,20 +110,6 @@ switch ($action) {
 /**
  * Overview page
  */
-/**
- * Schreibende ACP-Aktionen: verify_post_check() bricht im ACP nicht ab,
- * daher Rückgabewert prüfen (debugging.md #23). Gilt auch für die
- * Lösch-/Freigabe-Links aus den Popup-Menüs (Key als GET-Parameter).
- */
-function rpgmaps_acp_verify_key(): void
-{
-    global $mybb, $lang;
-
-    if (!verify_post_check($mybb->get_input('my_post_key'), true)) {
-        flash_message($lang->invalid_post_verify_key2, 'error');
-        admin_redirect('index.php?module=tools-rpgmaps');
-    }
-}
 
 function rpgmaps_admin_overview()
 {
@@ -237,7 +223,7 @@ function rpgmaps_admin_maps()
             $popup = new PopupMenu('map_' . $map['id'], 'Options');
             $popup->add_item('Edit', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_edit&id=' . (int)$map['id']);
             $popup->add_item('Manage Plots', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots&map_id=' . (int)$map['id']);
-            $popup->add_item('Delete', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_delete&id=' . (int)$map['id'], 'return confirm(' . htmlspecialchars_uni((string)json_encode($lang->rpgmaps_confirm_delete)) . ');');
+            $popup->add_item('Delete', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps_delete&id=' . (int)$map['id'] . '&my_post_key=' . $mybb->post_code, 'return AdminCP.deleteConfirmation(this, ' . htmlspecialchars_uni((string)json_encode($lang->rpgmaps_confirm_delete)) . ');');
             
             $form_container->output_cell($popup->fetch());
             $form_container->construct_row();
@@ -275,7 +261,6 @@ function rpgmaps_admin_maps_add()
     $page->output_nav_tabs($sub_tabs, 'maps');
     
     if ($mybb->request_method == 'post') {
-        rpgmaps_acp_verify_key();
 
         require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
         $db_helper = new RPGMapsDatabase();
@@ -374,7 +359,6 @@ function rpgmaps_admin_maps_edit()
     $page->output_nav_tabs($sub_tabs, 'maps');
     
     if ($mybb->request_method == 'post') {
-        rpgmaps_acp_verify_key();
 
         // Handle file upload if provided
         $filename = $map['filename']; // Keep existing filename by default
@@ -461,7 +445,9 @@ function rpgmaps_admin_maps_delete()
     $map_id = $mybb->get_input('id', MyBB::INPUT_INT);
     
     if ($mybb->request_method == 'post') {
-        rpgmaps_acp_verify_key();
+        if ($mybb->get_input('no')) {
+            admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
+        }
         $db_helper->deleteMap($map_id);
         flash_message($lang->rpgmaps_map_deleted, 'success');
         admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps');
@@ -545,7 +531,7 @@ function rpgmaps_admin_buildplots()
             
             $popup = new PopupMenu('plot_' . $plot['id'], 'Options');
             $popup->add_item('Edit', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots_edit&id=' . (int)$plot['id']);
-            $popup->add_item('Delete', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots_delete&id=' . (int)$plot['id'] . '&my_post_key=' . $mybb->post_code, 'return confirm(' . htmlspecialchars_uni((string)json_encode($lang->rpgmaps_confirm_delete)) . ');');
+            $popup->add_item('Delete', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots_delete&id=' . (int)$plot['id'] . '&my_post_key=' . $mybb->post_code, 'return AdminCP.deleteConfirmation(this, ' . htmlspecialchars_uni((string)json_encode($lang->rpgmaps_confirm_delete)) . ');');
             
             $form_container->output_cell($popup->fetch());
             $form_container->construct_row();
@@ -590,7 +576,6 @@ function rpgmaps_admin_buildplots_add()
     $page->output_nav_tabs($sub_tabs, 'maps');
     
     if ($mybb->request_method == 'post') {
-        rpgmaps_acp_verify_key();
 
         $plot_key = trim($mybb->get_input('plot_key'));
 
@@ -680,7 +665,6 @@ function rpgmaps_admin_buildplots_edit()
     $page->output_nav_tabs($sub_tabs, 'maps');
     
     if ($mybb->request_method == 'post') {
-        rpgmaps_acp_verify_key();
 
         // Get and normalize rotation value (0-360)
         $rotation = $mybb->get_input('rotation', MyBB::INPUT_INT);
@@ -731,23 +715,26 @@ function rpgmaps_admin_buildplots_delete()
 {
     global $mybb, $db, $lang;
 
-    rpgmaps_acp_verify_key();
-    
+    $back = 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=maps';
+    // Nur per POST: Link mit my_post_key + AdminCP.deleteConfirmation() (Core-Muster);
+    // den Key prüft admin/index.php selbst (debugging.md #23).
+    if ($mybb->request_method !== 'post') {
+        admin_redirect($back);
+    }
+
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
     $db_helper = new RPGMapsDatabase();
-    
+
     $plot_id = $mybb->get_input('id', MyBB::INPUT_INT);
     $plot = $db_helper->getPlotById($plot_id);
-    
     if (!$plot) {
-        echo 'Plot not found';
-        return;
+        flash_message($lang->rpgmaps_acp_plot_not_found, 'error');
+        admin_redirect($back);
     }
-    
+
     $db_helper->deletePlot($plot_id);
-    
-    echo '<p>' . $lang->rpgmaps_success . '</p>';
-    echo '<p><a href="index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots&map_id=' . (int)$plot['map_id'] . '">Back to Plots</a></p>';
+    flash_message($lang->rpgmaps_success, 'success');
+    admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=buildplots&map_id=' . (int)$plot['map_id']);
 }
 
 /**
@@ -789,7 +776,7 @@ function rpgmaps_admin_house_types()
             
             $popup = new PopupMenu('type_' . $type['id'], 'Options');
             $popup->add_item('Edit', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_edit&id=' . (int)$type['id']);
-            $popup->add_item('Delete', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_delete&id=' . (int)$type['id'] . '&my_post_key=' . $mybb->post_code, 'return confirm(' . htmlspecialchars_uni((string)json_encode($lang->rpgmaps_confirm_delete)) . ');');
+            $popup->add_item('Delete', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types_delete&id=' . (int)$type['id'] . '&my_post_key=' . $mybb->post_code, 'return AdminCP.deleteConfirmation(this, ' . htmlspecialchars_uni((string)json_encode($lang->rpgmaps_confirm_delete)) . ');');
             
             $form_container->output_cell($popup->fetch());
             $form_container->construct_row();
@@ -827,7 +814,6 @@ function rpgmaps_admin_house_types_add()
     $page->output_nav_tabs($sub_tabs, 'house_types');
     
     if ($mybb->request_method == 'post') {
-        rpgmaps_acp_verify_key();
 
         require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
         $db_helper = new RPGMapsDatabase();
@@ -924,7 +910,6 @@ function rpgmaps_admin_house_types_edit()
     $page->output_nav_tabs($sub_tabs, 'house_types');
     
     if ($mybb->request_method == 'post') {
-        rpgmaps_acp_verify_key();
 
         // Handle file upload if provided
         $filename = $type['asset_filename']; // Keep existing filename by default
@@ -1001,22 +986,22 @@ function rpgmaps_admin_house_types_delete()
 {
     global $mybb, $db, $lang;
 
-    rpgmaps_acp_verify_key();
-    
+    $back = 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types';
+    // Nur per POST: Link mit my_post_key + AdminCP.deleteConfirmation() (Core-Muster);
+    // den Key prüft admin/index.php selbst (debugging.md #23).
+    if ($mybb->request_method !== 'post') {
+        admin_redirect($back);
+    }
+
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
     $db_helper = new RPGMapsDatabase();
-    
-    $type_id = $mybb->get_input('id', MyBB::INPUT_INT);
-    
-    $success = $db_helper->deleteHouseType($type_id);
-    
-    if ($success) {
-        echo '<p>' . $lang->rpgmaps_success . '</p>';
+
+    if ($db_helper->deleteHouseType($mybb->get_input('id', MyBB::INPUT_INT))) {
+        flash_message($lang->rpgmaps_success, 'success');
     } else {
-        echo '<p>Cannot delete: Houses depend on this type.</p>';
+        flash_message($lang->rpgmaps_acp_house_type_in_use, 'error');
     }
-    
-    echo '<p><a href="index.php?module=tools-rpgmaps&action=rpgmaps&sub=house_types">Back to House Types</a></p>';
+    admin_redirect($back);
 }
 
 /**
@@ -1080,8 +1065,8 @@ function rpgmaps_admin_pending_actions()
             $table->construct_cell(date('Y-m-d H:i', $action['created_at']));
             
             $popup = new PopupMenu('action_' . $action['id'], 'Options');
-            $popup->add_item('Approve', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=action_approve&id=' . (int)$action['id'] . '&my_post_key=' . $mybb->post_code);
-            $popup->add_item('Reject', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=action_reject&id=' . (int)$action['id'] . '&my_post_key=' . $mybb->post_code);
+            $popup->add_item('Approve', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=action_approve&id=' . (int)$action['id'] . '&my_post_key=' . $mybb->post_code, 'return AdminCP.deleteConfirmation(this, ' . htmlspecialchars_uni((string)json_encode($lang->confirm_action)) . ');');
+            $popup->add_item('Reject', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=action_reject&id=' . (int)$action['id'] . '&my_post_key=' . $mybb->post_code, 'return AdminCP.deleteConfirmation(this, ' . htmlspecialchars_uni((string)json_encode($lang->confirm_action)) . ');');
             $table->construct_cell($popup->fetch(), array('class' => 'align_center'));
             
             $table->construct_row();
@@ -1098,39 +1083,26 @@ function rpgmaps_admin_pending_actions()
  */
 function rpgmaps_admin_action_approve()
 {
-    global $mybb, $db, $lang, $page;
+    global $mybb, $db, $lang;
 
-    rpgmaps_acp_verify_key();
-    
-    $page->add_breadcrumb_item($lang->rpgmaps, 'index.php?module=tools-rpgmaps');
-    $page->add_breadcrumb_item('Pending Actions', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions');
-    $page->add_breadcrumb_item('Approve Action');
-    $page->output_header($lang->rpgmaps . ' - Approve Action');
-    
+    $back = 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions';
+    // Nur per POST: Link mit my_post_key + AdminCP.deleteConfirmation() (Core-Muster);
+    // den Key prüft admin/index.php selbst (debugging.md #23).
+    if ($mybb->request_method !== 'post') {
+        admin_redirect($back);
+    }
+
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/rpgmaps.class.php';
     $manager = new RPGMapsManager();
-    
-    $action_id = $mybb->get_input('id', MyBB::INPUT_INT);
-    $admin_note = $mybb->get_input('note');
-    
-    $result = $manager->approveBuildRequest($action_id, $mybb->user['uid'], $admin_note);
-    
+
+    $result = $manager->approveBuildRequest($mybb->get_input('id', MyBB::INPUT_INT), (int)$mybb->user['uid'], $mybb->get_input('note'));
+
     if ($result['success']) {
-        flash_message('Action approved successfully!', 'success');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions');
+        flash_message($lang->rpgmaps_acp_action_approved, 'success');
     } else {
-        $table = new Table;
-        $table->construct_cell('<strong>Error:</strong> ' . htmlspecialchars_uni($result['message']));
-        $table->construct_row();
-        $table->output('Error');
-        
-        $table = new Table;
-        $table->construct_cell('<a href="index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions">Back to Pending Actions</a>');
-        $table->construct_row();
-        $table->output('Actions');
+        flash_message($lang->rpgmaps_error . ': ' . htmlspecialchars_uni((string)$result['message']), 'error');
     }
-    
-    $page->output_footer();
+    admin_redirect($back);
 }
 
 /**
@@ -1138,37 +1110,24 @@ function rpgmaps_admin_action_approve()
  */
 function rpgmaps_admin_action_reject()
 {
-    global $mybb, $db, $lang, $page;
+    global $mybb, $db, $lang;
 
-    rpgmaps_acp_verify_key();
-    
-    $page->add_breadcrumb_item($lang->rpgmaps, 'index.php?module=tools-rpgmaps');
-    $page->add_breadcrumb_item('Pending Actions', 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions');
-    $page->add_breadcrumb_item('Reject Action');
-    $page->output_header($lang->rpgmaps . ' - Reject Action');
-    
+    $back = 'index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions';
+    // Nur per POST: Link mit my_post_key + AdminCP.deleteConfirmation() (Core-Muster);
+    // den Key prüft admin/index.php selbst (debugging.md #23).
+    if ($mybb->request_method !== 'post') {
+        admin_redirect($back);
+    }
+
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/rpgmaps.class.php';
     $manager = new RPGMapsManager();
-    
-    $action_id = $mybb->get_input('id', MyBB::INPUT_INT);
-    $admin_note = $mybb->get_input('note');
-    
-    $result = $manager->rejectAction($action_id, $mybb->user['uid'], $admin_note);
-    
+
+    $result = $manager->rejectAction($mybb->get_input('id', MyBB::INPUT_INT), (int)$mybb->user['uid'], $mybb->get_input('note'));
+
     if ($result['success']) {
-        flash_message('Action rejected successfully!', 'success');
-        admin_redirect('index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions');
+        flash_message($lang->rpgmaps_acp_action_rejected, 'success');
     } else {
-        $table = new Table;
-        $table->construct_cell('<strong>Error:</strong> ' . htmlspecialchars_uni($result['message']));
-        $table->construct_row();
-        $table->output('Error');
-        
-        $table = new Table;
-        $table->construct_cell('<a href="index.php?module=tools-rpgmaps&action=rpgmaps&sub=pending_actions">Back to Pending Actions</a>');
-        $table->construct_row();
-        $table->output('Actions');
+        flash_message($lang->rpgmaps_error . ': ' . htmlspecialchars_uni((string)$result['message']), 'error');
     }
-    
-    $page->output_footer();
+    admin_redirect($back);
 }

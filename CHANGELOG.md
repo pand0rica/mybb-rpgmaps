@@ -6,9 +6,12 @@ All notable changes to RPG Maps will be documented here.
 
 ### Security
 - **ACP actions without CSRF protection.** Deleting plots and house types and approving or
-  rejecting pending actions ran on plain GET links without any post-key check. The links now
-  carry `my_post_key`, and every ACP write handler checks it with
-  `rpgmaps_acp_verify_key()` (in the ACP `verify_post_check()` does not abort on its own).
+  rejecting pending actions ran on plain GET links without any post-key check. They now use
+  MyBB's native pattern (dev kit `debugging.md` #23): the popup link carries `my_post_key`,
+  `AdminCP.deleteConfirmation()` asks for confirmation and sends it as POST, and the handlers
+  only act on POST – `admin/index.php` validates the key itself. No own key helper.
+  The four handlers now answer with `flash_message()` + `admin_redirect()` instead of bare
+  `echo` output without page header.
 - **AJAX token was the session ID.** The frontend CSRF token exposed the MyBB session ID in
   the page HTML. It now uses MyBB's post key (`$mybb->post_code` / `verify_post_check()`).
 - ACP delete confirmations use `json_encode()` for the JavaScript string.

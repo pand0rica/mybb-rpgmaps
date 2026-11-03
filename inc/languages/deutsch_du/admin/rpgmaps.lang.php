@@ -124,3 +124,7 @@ $l['rpgmaps_default_currency'] = 'Standardwährung';
 $l['rpgmaps_default_currency_desc'] = 'Name der Währung für Preise';
 $l['rpgmaps_enable_occupancy'] = 'Bewohnersystem aktivieren';
 $l['rpgmaps_enable_occupancy_desc'] = 'Erlaubt mehrere Bewohner pro Haus';
+$l['rpgmaps_acp_plot_not_found'] = 'Das Grundstück wurde nicht gefunden.';
+$l['rpgmaps_acp_house_type_in_use'] = 'Löschen nicht möglich: Häuser nutzen diesen Typ noch.';
+$l['rpgmaps_acp_action_approved'] = 'Antrag genehmigt.';
+$l['rpgmaps_acp_action_rejected'] = 'Antrag abgelehnt.';
