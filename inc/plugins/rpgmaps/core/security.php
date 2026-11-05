@@ -20,21 +20,15 @@ class RPGMapsSecurity
      */
     public static function verifyCSRFToken($token)
     {
-        global $mybb;
-        
         if (empty($token)) {
             return false;
         }
-        
-        // Get the session token from the session
-        if (!isset($mybb->session) || empty($mybb->session->sid)) {
-            return false;
-        }
-        
-        // Verify token matches
-        return $token === $mybb->session->sid;
+
+        // MyBB-eigener Post-Key statt Session-ID (die Session-ID ist kein
+        // CSRF-Geheimnis und darf nicht im HTML stehen)
+        return verify_post_check((string)$token, true);
     }
-    
+
     /**
      * Generate CSRF token for forms
      * @return string
@@ -42,14 +36,10 @@ class RPGMapsSecurity
     public static function generateCSRFToken()
     {
         global $mybb;
-        
-        if (!isset($mybb->session) || empty($mybb->session->sid)) {
-            return '';
-        }
-        
-        return $mybb->session->sid;
+
+        return (string)$mybb->post_code;
     }
-    
+
     /**
      * Validate input - string
      * @param string $input

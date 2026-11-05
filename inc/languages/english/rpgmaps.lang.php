@@ -158,3 +158,28 @@ $l['rpgmaps_admin_action_status'] = 'Status';
 $l['rpgmaps_house_settings'] = 'House Settings';
 
 $l['rpgmaps_alert_build_approved'] = 'Your build request for plot {1} on map {2} has been approved!';
+
+// Review 2026-11
+$l['rpgmaps_modcp_title'] = 'Pending build requests';
+$l['rpgmaps_modcp_type'] = 'Type';
+$l['rpgmaps_modcp_account'] = 'Account';
+$l['rpgmaps_modcp_location'] = 'Location';
+$l['rpgmaps_modcp_created'] = 'Created';
+$l['rpgmaps_modcp_actions'] = 'Actions';
+$l['rpgmaps_modcp_no_actions'] = 'No pending requests.';
+$l['rpgmaps_modcp_plot'] = 'Plot {1}';
+$l['rpgmaps_modcp_approved'] = 'The build request has been approved.';
+$l['rpgmaps_modcp_rejected'] = 'The build request has been rejected.';
+$l['rpgmaps_modcp_error'] = 'Error: {1}';
+
+// Frontend build modal / house settings
+$l['rpgmaps_description_placeholder'] = 'Describe your house...';
+$l['rpgmaps_house_name_placeholder'] = 'e.g. Oak Farm';
+$l['rpgmaps_invalid_max_occupants'] = 'Please enter a valid maximum number of occupants (1–20).';
+$l['rpgmaps_house_settings_saved'] = 'House settings saved.';
+$l['rpgmaps_house_settings_error'] = 'The house settings could not be saved.';
+$l['rpgmaps_csrf_failed'] = 'Your session has expired. Please reload the page and try again.';
+$l['rpgmaps_house_not_found'] = 'The house could not be found.';
+$l['rpgmaps_invalid_parameters'] = 'Invalid input.';
+$l['rpgmaps_unknown_action'] = 'Unknown action.';
+$l['rpgmaps_load_error'] = 'RPG Maps could not be loaded. Please try again later.';

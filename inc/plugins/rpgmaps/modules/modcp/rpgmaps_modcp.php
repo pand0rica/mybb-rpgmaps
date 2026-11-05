@@ -50,7 +50,7 @@ function rpgmaps_modcp_pending_list()
     global $mybb, $db, $lang, $templates, $theme, $headerinclude, $header, $footer, $modcp_nav;
     
     add_breadcrumb($lang->modcp, 'modcp.php');
-    add_breadcrumb('RPG Maps', 'modcp.php?action=rpgmaps');
+    add_breadcrumb($lang->rpgmaps_name, 'modcp.php?action=rpgmaps');
 
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/database.php';
     $db_helper = new RPGMapsDatabase();
@@ -60,7 +60,7 @@ function rpgmaps_modcp_pending_list()
     $action_rows = '';
     
     if (empty($actions)) {
-        $action_rows = '<tr><td colspan="5" class="trow1 rpgmaps-no-actions">Keine ausstehenden Anfragen.</td></tr>';
+        $action_rows = '<tr><td colspan="5" class="trow1 rpgmaps-no-actions">' . $lang->rpgmaps_modcp_no_actions . '</td></tr>';
     } else {
         foreach ($actions as $action) {
             // Get user info
@@ -75,17 +75,24 @@ function rpgmaps_modcp_pending_list()
             $action_type = htmlspecialchars_uni($action['action_type']);
             $created_date = my_date('relative', $action['created_at']);
             
-            $approve_link = 'modcp.php?action=rpgmaps&sub=approve&id=' . (int)$action['id'] . '&my_post_key=' . $mybb->post_code;
-            $reject_link = 'modcp.php?action=rpgmaps&sub=reject&id=' . (int)$action['id'] . '&my_post_key=' . $mybb->post_code;
+            $action_id = (int)$action['id'];
+            $decision_form = function (string $sub, string $label) use ($action_id, $mybb): string {
+                return '<form method="post" action="modcp.php" class="rpgmaps-inline-form">'
+                    . '<input type="hidden" name="action" value="rpgmaps" />'
+                    . '<input type="hidden" name="sub" value="' . $sub . '" />'
+                    . '<input type="hidden" name="id" value="' . $action_id . '" />'
+                    . '<input type="hidden" name="my_post_key" value="' . $mybb->post_code . '" />'
+                    . '<input type="submit" class="button" value="' . htmlspecialchars_uni($label) . '" /></form>';
+            };
             
             $action_rows .= '<tr>
                 <td class="trow1">' . $action_type . '</td>
                 <td class="trow1">' . $user_link . '</td>
-                <td class="trow1">' . htmlspecialchars_uni($map['title']) . ' - Plot ' . htmlspecialchars_uni($plot['plot_key']) . '</td>
+                <td class="trow1">' . htmlspecialchars_uni($map['title']) . ' - ' . $lang->sprintf($lang->rpgmaps_modcp_plot, htmlspecialchars_uni($plot['plot_key'])) . '</td>
                 <td class="trow1">' . $created_date . '</td>
                 <td class="trow1 rpgmaps-action-buttons">
-                    <a href="' . $approve_link . '" class="button rpgmaps-approve-btn">Genehmigen</a> 
-                    <a href="' . $reject_link . '" class="button rpgmaps-reject-btn">Ablehnen</a>
+                    ' . $decision_form('approve', $lang->rpgmaps_admin_approve) . '
+                    ' . $decision_form('reject', $lang->rpgmaps_admin_reject) . '
                 </td>
             </tr>';
         }
@@ -103,6 +110,10 @@ function rpgmaps_modcp_approve()
 {
     global $mybb, $db, $lang;
     
+    // Schreibend nur per POST (debugging.md #3); verify_post_check() bricht im Frontend selbst ab.
+    if ($mybb->request_method !== 'post') {
+        error_no_permission();
+    }
     verify_post_check($mybb->get_input('my_post_key'));
     
     $action_id = $mybb->get_input('id', MyBB::INPUT_INT);
@@ -113,9 +124,9 @@ function rpgmaps_modcp_approve()
     $result = $manager->approveBuildRequest($action_id, $mybb->user['uid'], '');
     
     if ($result['success']) {
-        redirect('modcp.php?action=rpgmaps', 'Bauantrag wurde erfolgreich genehmigt!');
+        redirect('modcp.php?action=rpgmaps', $lang->rpgmaps_modcp_approved);
     } else {
-        error('Fehler: ' . $result['message']);
+        error($lang->sprintf($lang->rpgmaps_modcp_error, htmlspecialchars_uni((string)$result['message'])));
     }
 }
 
@@ -126,6 +137,10 @@ function rpgmaps_modcp_reject()
 {
     global $mybb, $db, $lang;
     
+    // Schreibend nur per POST (debugging.md #3); verify_post_check() bricht im Frontend selbst ab.
+    if ($mybb->request_method !== 'post') {
+        error_no_permission();
+    }
     verify_post_check($mybb->get_input('my_post_key'));
     
     $action_id = $mybb->get_input('id', MyBB::INPUT_INT);
@@ -136,8 +151,8 @@ function rpgmaps_modcp_reject()
     $result = $manager->rejectAction($action_id, $mybb->user['uid'], '');
     
     if ($result['success']) {
-        redirect('modcp.php?action=rpgmaps', 'Bauantrag wurde abgelehnt.');
+        redirect('modcp.php?action=rpgmaps', $lang->rpgmaps_modcp_rejected);
     } else {
-        error('Fehler: ' . $result['message']);
+        error($lang->sprintf($lang->rpgmaps_modcp_error, htmlspecialchars_uni((string)$result['message'])));
     }
 }

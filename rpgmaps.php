@@ -26,7 +26,7 @@ if (!isset($mybb->settings['rpgmaps_enabled']) || $mybb->settings['rpgmaps_enabl
 $action = 'rpgmaps';
 
 // Handle AJAX requests
-if (isset($mybb->input['action']) && $mybb->input['action'] == 'ajax_rpgmaps') {
+if ($mybb->get_input('action') === 'ajax_rpgmaps') {
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/ajax.php';
     $sub = $mybb->get_input('sub');
     rpgmaps_handle_ajax($sub);
@@ -41,7 +41,7 @@ try {
     $db_helper = new RPGMapsDatabase();
     $security = new RPGMapsSecurity();
 } catch (Exception $e) {
-    error('Error initializing RPG Maps: ' . $e->getMessage());
+    error($lang->rpgmaps_load_error);
 }
 
 // Add JavaScript to header (CSS is loaded automatically by MyBB from themestylesheets)
@@ -51,7 +51,7 @@ $headerinclude .= '<script src="' . $mybb->settings['bburl'] . '/inc/plugins/rpg
 $rpgmaps_notification = '';
 
 // Get the map ID from query string
-$map_id = isset($mybb->input['map_id']) ? (int)$mybb->input['map_id'] : 0;
+$map_id = $mybb->get_input('map_id', MyBB::INPUT_INT);
 
 // Page title
 add_breadcrumb($lang->rpgmaps_maps, "rpgmaps.php");
@@ -61,13 +61,14 @@ if ($map_id <= 0) {
     try {
         $maps = $db_helper->getMaps();
     } catch (Exception $e) {
-        error('Database error: ' . $e->getMessage());
+        error($lang->rpgmaps_load_error);
     }
     
     $map_list_items = '';
     if (!empty($maps)) {
         foreach ($maps as $map) {
-            $rpgmaps_map_url = $mybb->settings['bburl'] . '/rpgmaps.php?map_id=' . (int)$map['id'];
+            $rpgmaps_map_id = (int)$map['id'];
+            $rpgmaps_map_url = $mybb->settings['bburl'] . '/rpgmaps.php?map_id=' . $rpgmaps_map_id;
             $rpgmaps_map_title = htmlspecialchars_uni($map['title']);
             $rpgmaps_map_description = htmlspecialchars_uni($map['description']);
             eval('$map_list_items .= "' . $templates->get('rpgmaps_map_row') . '";');
@@ -205,6 +206,10 @@ if ($map_id <= 0) {
         'close' => $lang->rpgmaps_close,
         'no_occupants' => $lang->rpgmaps_no_occupants,
         'house_settings' => $lang->rpgmaps_house_settings,
+        'invalid_house_type' => $lang->rpgmaps_invalid_house_type,
+        'invalid_max_occupants' => $lang->rpgmaps_invalid_max_occupants,
+        'house_settings_saved' => $lang->rpgmaps_house_settings_saved,
+        'house_settings_error' => $lang->rpgmaps_house_settings_error,
     ]);
     
     // Prepare all variables for template

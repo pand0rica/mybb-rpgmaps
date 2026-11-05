@@ -14,9 +14,9 @@ A MyBB 1.8 plugin that lets forum admins create interactive image-based maps for
 1. **Upload files**
    - Copy all plugin files into your MyBB root directory, preserving the folder structure
 
-2. **Activate the plugin**
+2. **Install & activate the plugin**
    - Go to **Admin CP → Configuration → Plugins**
-   - Find *RPG Maps* and click **Activate**
+   - Find *RPG Maps* and click **Install & Activate**
    - The plugin creates all necessary database tables automatically
 
 3. **Configure settings**

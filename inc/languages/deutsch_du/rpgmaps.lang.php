@@ -157,3 +157,28 @@ $l['rpgmaps_house_name_optional'] = 'Hausname (optional)';
 $l['rpgmaps_house_settings'] = 'Haus-Einstellungen';
 
 $l['rpgmaps_alert_build_approved'] = 'Dein Bauantrag für Bauplatz {1} auf Karte {2} wurde genehmigt!';
+
+// Review 2026-11
+$l['rpgmaps_modcp_title'] = 'Offene Bauanträge';
+$l['rpgmaps_modcp_type'] = 'Typ';
+$l['rpgmaps_modcp_account'] = 'Account';
+$l['rpgmaps_modcp_location'] = 'Ort';
+$l['rpgmaps_modcp_created'] = 'Erstellt';
+$l['rpgmaps_modcp_actions'] = 'Aktionen';
+$l['rpgmaps_modcp_no_actions'] = 'Keine offenen Anträge.';
+$l['rpgmaps_modcp_plot'] = 'Bauplatz {1}';
+$l['rpgmaps_modcp_approved'] = 'Der Bauantrag wurde genehmigt.';
+$l['rpgmaps_modcp_rejected'] = 'Der Bauantrag wurde abgelehnt.';
+$l['rpgmaps_modcp_error'] = 'Fehler: {1}';
+
+// Frontend build modal / house settings
+$l['rpgmaps_description_placeholder'] = 'Beschreibe dein Haus …';
+$l['rpgmaps_house_name_placeholder'] = 'z. B. Eichenhof';
+$l['rpgmaps_invalid_max_occupants'] = 'Bitte gib eine gültige maximale Bewohnerzahl (1–20) ein.';
+$l['rpgmaps_house_settings_saved'] = 'Haus-Einstellungen gespeichert.';
+$l['rpgmaps_house_settings_error'] = 'Die Haus-Einstellungen konnten nicht gespeichert werden.';
+$l['rpgmaps_csrf_failed'] = 'Deine Sitzung ist abgelaufen. Bitte lade die Seite neu und versuche es noch einmal.';
+$l['rpgmaps_house_not_found'] = 'Das Haus wurde nicht gefunden.';
+$l['rpgmaps_invalid_parameters'] = 'Ungültige Eingabe.';
+$l['rpgmaps_unknown_action'] = 'Unbekannte Aktion.';
+$l['rpgmaps_load_error'] = 'RPG Maps konnte nicht geladen werden. Bitte versuche es später noch einmal.';
