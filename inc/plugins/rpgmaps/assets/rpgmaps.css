@@ -662,3 +662,12 @@
         max-width: 95vw;
     }
 }
+
+/* ModCP-Aktionen als Buttons (conventions.md §9) */
+.rpgmaps-inline-form {
+    display: inline;
+    margin: 0;
+}
+.rpgmaps-inline-form + .rpgmaps-inline-form {
+    margin-left: 4px;
+}

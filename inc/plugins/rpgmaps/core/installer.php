@@ -318,7 +318,7 @@ function rpgmaps_install_templates()
 
         'modcp_rpgmaps_pending' => $db->escape_string('<html>
 <head>
-<title>{$mybb->settings[\'bbname\']} - {$lang->modcp} - RPG Maps</title>
+<title>{$mybb->settings[\'bbname\']} - {$lang->modcp} - {$lang->rpgmaps_name}</title>
 {$headerinclude}
 </head>
 <body>
@@ -329,14 +329,14 @@ function rpgmaps_install_templates()
 <td valign="top">
 <table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
 <tr>
-<td class="thead" colspan="5"><strong>RPG Maps - Ausstehende Bauanträge</strong></td>
+<td class="thead" colspan="5"><strong>{$lang->rpgmaps_name} - {$lang->rpgmaps_modcp_title}</strong></td>
 </tr>
 <tr>
-<td class="tcat" width="15%"><strong>Typ</strong></td>
-<td class="tcat" width="20%"><strong>Benutzer</strong></td>
-<td class="tcat" width="30%"><strong>Ort</strong></td>
-<td class="tcat" width="20%"><strong>Erstellt</strong></td>
-<td class="tcat rpgmaps-action-buttons" width="15%"><strong>Aktionen</strong></td>
+<td class="tcat" width="15%"><strong>{$lang->rpgmaps_modcp_type}</strong></td>
+<td class="tcat" width="20%"><strong>{$lang->rpgmaps_modcp_account}</strong></td>
+<td class="tcat" width="30%"><strong>{$lang->rpgmaps_modcp_location}</strong></td>
+<td class="tcat" width="20%"><strong>{$lang->rpgmaps_modcp_created}</strong></td>
+<td class="tcat rpgmaps-action-buttons" width="15%"><strong>{$lang->rpgmaps_modcp_actions}</strong></td>
 </tr>
 {$action_rows}
 </table>
@@ -398,72 +398,35 @@ function rpgmaps_uninstall_templates()
 
     rpgmaps_remove_nav_from_header();
 
-    // Delete templates
-    $db->delete_query('templates', "title LIKE 'rpgmaps_%'");
+    // Delete templates (incl. the ModCP page template)
+    $db->delete_query('templates', "title LIKE 'rpgmaps\\_%' OR title = 'modcp_rpgmaps_pending'");
 
     // Delete template group
     $db->delete_query('templategroups', "prefix = 'rpgmaps'");
 }
 
 /**
- * Insert {$rpgmaps_nav} before the search toplink in the header template.
- * Falls back to inserting before the first </ul> if the search link is not found.
+ * Fügt {$rpgmaps_nav} vor dem Such-Link in den Header aller Template-Sets ein
+ * (native find_replace_templatesets(), conventions.md §11). Idempotent.
  */
 function rpgmaps_add_nav_to_header()
 {
-    global $db;
-
-    $query = $db->simple_select('templates', 'template', "title = 'header' AND sid = '-2'");
-    $row = $db->fetch_array($query);
-
-    if (!$row) {
-        // Master template (sid = -1) as fallback
-        $query = $db->simple_select('templates', 'template', "title = 'header' AND sid = '-1'");
-        $row = $db->fetch_array($query);
-    }
-
-    if (!$row || strpos($row['template'], '{$rpgmaps_nav}') !== false) {
-        return; // Not found or already inserted
-    }
-
-    $content = $row['template'];
-
-    // Find the <li> that contains toplinks_search and insert before it
-    $search_pos = strpos($content, 'toplinks_search');
-    if ($search_pos !== false) {
-        $li_pos = strrpos(substr($content, 0, $search_pos), '<li');
-        if ($li_pos !== false) {
-            $content = substr($content, 0, $li_pos) . '{$rpgmaps_nav}' . "\n" . substr($content, $li_pos);
-        }
-    } else {
-        // Fallback: insert before first </ul>
-        $ul_pos = strpos($content, '</ul>');
-        if ($ul_pos !== false) {
-            $content = substr($content, 0, $ul_pos) . '{$rpgmaps_nav}' . "\n" . substr($content, $ul_pos);
-        }
-    }
-
-    $db->update_query('templates', array('template' => $db->escape_string($content)), "title = 'header' AND sid = '-2'");
+    require_once MYBB_ROOT . 'inc/adminfunctions_templates.php';
+    rpgmaps_remove_nav_from_header();
+    find_replace_templatesets(
+        'header',
+        '#(<li>(?:(?!</li>).)*?\{\$lang->toplinks_search\})#s',
+        '{$rpgmaps_nav}' . "\n" . '$1'
+    );
 }
 
 /**
- * Remove {$rpgmaps_nav} from the header template.
+ * Entfernt {$rpgmaps_nav} aus dem Header aller Template-Sets.
  */
 function rpgmaps_remove_nav_from_header()
 {
-    global $db;
-
-    $query = $db->simple_select('templates', 'template', "title = 'header' AND sid = '-2'");
-    $row = $db->fetch_array($query);
-
-    if (!$row || strpos($row['template'], '{$rpgmaps_nav}') === false) {
-        return;
-    }
-
-    $content = str_replace('{$rpgmaps_nav}' . "\n", '', $row['template']);
-    $content = str_replace('{$rpgmaps_nav}', '', $content);
-
-    $db->update_query('templates', array('template' => $db->escape_string($content)), "title = 'header' AND sid = '-2'");
+    require_once MYBB_ROOT . 'inc/adminfunctions_templates.php';
+    find_replace_templatesets('header', '#' . preg_quote('{$rpgmaps_nav}') . '\r?\n?#', '', 0);
 }
 
 /**
@@ -719,24 +682,7 @@ function rpgmaps_uninstall_settings()
     rebuild_settings();
 }
 
-/**
- * Install plugin hooks
- */
-function rpgmaps_install_hooks()
-{
-    global $db;
 
-    // Hooks are registered in the main plugin file via $plugins->add_hook()
-    // This function is here for future reference if we need custom hook registration
-}
-
-/**
- * Uninstall plugin hooks
- */
-function rpgmaps_uninstall_hooks()
-{
-    // Hooks are automatically removed when plugin is disabled
-}
 
 /**
  * Helper: load MyAlerts classes if available.
@@ -899,5 +845,10 @@ function rpgmaps_uninstall_css()
     global $db;
 
     // Remove stylesheets from all themes
+    require_once MYBB_ADMIN_DIR . 'inc/functions_themes.php';
     $db->delete_query('themestylesheets', "name = 'rpgmaps.css'");
+    $tids = $db->simple_select('themes', 'tid');
+    while ($theme = $db->fetch_array($tids)) {
+        update_theme_stylesheet_list((int)$theme['tid']);
+    }
 }

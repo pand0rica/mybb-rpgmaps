@@ -157,3 +157,16 @@ $l['rpgmaps_house_name_optional'] = 'Hausname (optional)';
 $l['rpgmaps_house_settings'] = 'Haus-Einstellungen';
 
 $l['rpgmaps_alert_build_approved'] = 'Dein Bauantrag für Bauplatz {1} auf Karte {2} wurde genehmigt!';
+
+// Review 2026-11
+$l['rpgmaps_modcp_title'] = 'Offene Bauanträge';
+$l['rpgmaps_modcp_type'] = 'Typ';
+$l['rpgmaps_modcp_account'] = 'Account';
+$l['rpgmaps_modcp_location'] = 'Ort';
+$l['rpgmaps_modcp_created'] = 'Erstellt';
+$l['rpgmaps_modcp_actions'] = 'Aktionen';
+$l['rpgmaps_modcp_no_actions'] = 'Keine offenen Anträge.';
+$l['rpgmaps_modcp_plot'] = 'Bauplatz {1}';
+$l['rpgmaps_modcp_approved'] = 'Der Bauantrag wurde genehmigt.';
+$l['rpgmaps_modcp_rejected'] = 'Der Bauantrag wurde abgelehnt.';
+$l['rpgmaps_modcp_error'] = 'Fehler: {1}';

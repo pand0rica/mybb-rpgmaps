@@ -43,11 +43,9 @@ function rpgmaps_install()
     // Include database setup
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/installer.php';
     rpgmaps_install_tables();
-    rpgmaps_install_templates();
     rpgmaps_install_settings();
-    rpgmaps_install_hooks();
-    rpgmaps_install_css();
     rpgmaps_install_alert_type();
+    // Templates, Header-Link und Stylesheet gehören zu activate()/deactivate() (debugging.md #8)
 }
 
 /**
@@ -57,10 +55,22 @@ function rpgmaps_install()
 function rpgmaps_activate()
 {
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/installer.php';
-    rpgmaps_update_templates();
     rpgmaps_update_tables();
+    rpgmaps_install_templates();
+    rpgmaps_update_templates();
     rpgmaps_update_css();
     rpgmaps_install_alert_type();
+}
+
+/**
+ * Spiegelbild zu activate(): Templates, Header-Link und Stylesheet entfernen.
+ * Tabellen, Settings und Alert-Typ bleiben bis zur Deinstallation erhalten.
+ */
+function rpgmaps_deactivate()
+{
+    require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/installer.php';
+    rpgmaps_uninstall_templates();
+    rpgmaps_uninstall_css();
 }
 
 /**
@@ -78,7 +88,6 @@ function rpgmaps_uninstall()
     rpgmaps_uninstall_templates();
     rpgmaps_uninstall_settings();
     rpgmaps_uninstall_css();
-    rpgmaps_uninstall_hooks();
 }
 
 /**
@@ -93,48 +102,20 @@ function rpgmaps_is_installed()
     return $db->table_exists('rpgmaps_maps');
 }
 
-/**
- * Frontend action hook - register frontend script
- * Handles main rpgmaps.php page
- */
-function rpgmaps_frontend_action_hook()
-{
-    global $action, $mybb;
-    
-    // Only load our plugin code if action is 'rpgmaps'
-    if ($action === 'rpgmaps') {
-        require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/rpgmaps.class.php';
-        require_once MYBB_ROOT . 'inc/plugins/rpgmaps/frontend.php';
-    }
-}
+
 
 /**
- * AJAX hook for handling AJAX requests
+ * Räumt Häuser/Bewohner/Anträge gelöschter Accounts auf. datahandler_user_delete_start
+ * deckt alle Löschwege ab (ACP einzeln/gesammelt, Zusammenführen, Frontend).
+ *
+ * @param UserDataHandler $userhandler
  */
-function rpgmaps_ajax_hook()
+function rpgmaps_user_delete_hook($userhandler)
 {
-    global $mybb;
-    
-    // Get the sub-action from AJAX request
-    $sub = $mybb->get_input('sub', MyBB::INPUT_STRING);
-
-    if (!empty($sub) && strpos($sub, 'rpgmaps_') === 0) {
-        // Load AJAX handler
-        require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/ajax.php';
-        rpgmaps_handle_ajax($sub);
-    }
-}
-
-/**
- * User delete hook
- * Cleans up occupants when users are deleted
- */
-function rpgmaps_user_delete_hook($uid)
-{
-    global $db;
-    
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/hooks.php';
-    rpgmaps_handle_user_deletion($uid);
+    foreach ((array)$userhandler->delete_uids as $uid) {
+        rpgmaps_handle_user_deletion((int)$uid);
+    }
 }
 
 /**
@@ -172,7 +153,7 @@ function rpgmaps_admin_menu_hook(&$sub_menu)
     
     $sub_menu['150'] = array(
         'id' => 'rpgmaps',
-        'title' => 'RPG Maps',
+        'title' => $lang->rpgmaps_admin_menu,
         'link' => 'index.php?module=tools-rpgmaps'
     );
 }
@@ -183,11 +164,8 @@ require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/hooks.php';
 // Register hooks
 $plugins->add_hook('global_intermediate', 'rpgmaps_build_nav');
 $plugins->add_hook('global_intermediate', 'rpgmaps_register_myalerts_formatter', 20);
-$plugins->add_hook('action_start', 'rpgmaps_frontend_action_hook');
-$plugins->add_hook('ajax_rpgmaps', 'rpgmaps_ajax_hook');
-$plugins->add_hook('user_delete', 'rpgmaps_user_delete_hook');
-$plugins->add_hook('admin_action_handler', 'rpgmaps_admin_action_hook');
-$plugins->add_hook('admin_permissions', 'rpgmaps_admin_permissions');
+$plugins->add_hook('datahandler_user_delete_start', 'rpgmaps_user_delete_hook');
+$plugins->add_hook('admin_tools_permissions', 'rpgmaps_admin_permissions');
 $plugins->add_hook('admin_tools_menu', 'rpgmaps_admin_menu_hook');
 $plugins->add_hook('admin_tools_action_handler', 'rpgmaps_admin_action_hook');
 $plugins->add_hook('index_end', 'rpgmaps_index_notification');

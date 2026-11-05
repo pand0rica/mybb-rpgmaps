@@ -158,3 +158,16 @@ $l['rpgmaps_admin_action_status'] = 'Status';
 $l['rpgmaps_house_settings'] = 'House Settings';
 
 $l['rpgmaps_alert_build_approved'] = 'Your build request for plot {1} on map {2} has been approved!';
+
+// Review 2026-11
+$l['rpgmaps_modcp_title'] = 'Pending build requests';
+$l['rpgmaps_modcp_type'] = 'Type';
+$l['rpgmaps_modcp_account'] = 'Account';
+$l['rpgmaps_modcp_location'] = 'Location';
+$l['rpgmaps_modcp_created'] = 'Created';
+$l['rpgmaps_modcp_actions'] = 'Actions';
+$l['rpgmaps_modcp_no_actions'] = 'No pending requests.';
+$l['rpgmaps_modcp_plot'] = 'Plot {1}';
+$l['rpgmaps_modcp_approved'] = 'The build request has been approved.';
+$l['rpgmaps_modcp_rejected'] = 'The build request has been rejected.';
+$l['rpgmaps_modcp_error'] = 'Error: {1}';

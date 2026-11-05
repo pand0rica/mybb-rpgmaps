@@ -4,6 +4,32 @@ All notable changes to RPG Maps will be documented here.
 
 ## [Unreleased]
 
+### Fixed
+- **Account deletion never cleaned up.** The plugin hooked into `user_delete`, which MyBB
+  does not have. It now uses `datahandler_user_delete_start` and removes houses, occupancies
+  and requests of every deleted account (ACP single/bulk, merge, front end).
+- **Admin permission was never registered** (`admin_permissions` → `admin_tools_permissions`).
+  Removed the non-existent hooks `action_start`, `ajax_rpgmaps` and `admin_action_handler`
+  (the first one pointed to a missing file).
+- **No `deactivate()`.** Templates, the header link and the stylesheet stayed in place after
+  deactivating. They now belong to `activate()`/`deactivate()`; tables, settings and the alert
+  type to `install()`/`uninstall()`. `uninstall()` also removes the ModCP template.
+
+### Changed
+- **ACP and ModCP fully translatable:** about 75 hard-coded English/German texts (tabs,
+  table headers, form labels, messages) moved to the language files (English, German du/Sie).
+  The tab definition exists once (`rpgmaps_acp_sub_tabs()`) instead of six copies.
+- ModCP: approve/reject are POST forms with `input.button` instead of GET links.
+- Header link is inserted/removed with `find_replace_templatesets()` in every template set
+  (previously only the master template was edited directly).
+- German: “Benutzer” → “Account”.
+
+### Removed
+- Dead files `inc/plugins/rpgmaps/templates/frontend.php` and
+  `inc/plugins/rpgmaps/languages/*.lang.php` (never loaded).
+
+**Update note:** deactivate and reactivate the plugin once.
+
 ### Security
 - **ACP actions without CSRF protection.** Deleting plots and house types and approving or
   rejecting pending actions ran on plain GET links without any post-key check. They now use
