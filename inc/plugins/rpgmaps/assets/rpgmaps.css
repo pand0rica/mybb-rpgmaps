@@ -297,13 +297,6 @@
 
 .rpgmaps-modal button:hover {}
 
-.rpgmaps-modal .btn-secondary {
-    background: #95a5a6;
-}
-
-.rpgmaps-modal .btn-secondary:hover {
-    background: #7f8c8d;
-}
 
 /* Status messages */
 .rpgmaps-message {
@@ -535,42 +528,20 @@
     align-items: center;
 }
 
-.description-edit-controls .btn-small {
+/* Small buttons in the house panel: look comes from the theme (input.button / .button) */
+.description-edit-controls .rpgmaps-btn-small {
     white-space: nowrap;
-    width: auto;
-    min-width: 0;
-    line-height: 1.2;
 }
 
-.btn-small {
-    padding: 5px 10px;
-    font-size: 12px;
-    background: #3498db;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
+.rpgmaps-btn-small {
     margin-right: 5px;
-    display: inline-block;
 }
 
-.btn-small:hover {
-    background: #2980b9;
-}
-
-.btn-small.btn-cancel {
-    background: #95a5a6;
-}
-
-.btn-small.btn-cancel:hover {
-    background: #7f8c8d;
-}
-
-.btn-small.hidden {
+.rpgmaps-btn-small.hidden {
     display: none;
 }
 
-.btn-small.visible {
+.rpgmaps-btn-small.visible {
     display: inline-block;
 }
 
@@ -626,15 +597,6 @@
     text-align: center;
 }
 
-.rpgmaps-approve-btn {
-    color: green;
-    font-weight: bold;
-}
-
-.rpgmaps-reject-btn {
-    color: red;
-    font-weight: bold;
-}
 
 .rpgmaps-pending-badge {
     background: #c33;

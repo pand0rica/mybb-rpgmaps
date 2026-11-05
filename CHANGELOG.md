@@ -16,6 +16,19 @@ All notable changes to RPG Maps will be documented here.
   type to `install()`/`uninstall()`. `uninstall()` also removes the ModCP template.
 
 ### Changed
+- **Front end fully translatable:** the build modal ("Haus bauen", "Bauantrag einreichen",
+  labels, placeholders), house-settings messages in `rpgmaps.js` and all AJAX error messages
+  (`rpgmaps_ajax_error()`) now come from the language files (English, German du/Sie). Internal
+  exception texts are no longer shown to visitors.
+- **Theme buttons:** all front-end buttons use the theme's `button` class (`input.button` in
+  forms, `<button type="button" class="button">` for JS actions); the own `btn-small`,
+  `btn-primary`/`btn-secondary` styles were removed. "View map" in the map list is a GET form
+  instead of a link styled as a button.
+- **One template source:** `rpgmaps_get_templates()` replaces the duplicated markup in
+  `rpgmaps_install_templates()`/`rpgmaps_update_templates()`. `activate()` reinstalls the
+  master templates, so updates always ship the current markup. Unused templates
+  `rpgmaps_tooltip` and `rpgmaps_modal_build` removed; `modcp_nav_rpgmaps` is now also removed
+  on deactivate and uses `{$lang->rpgmaps_name}`.
 - **ACP and ModCP fully translatable:** about 75 hard-coded English/German texts (tabs,
   table headers, form labels, messages) moved to the language files (English, German du/Sie).
   The tab definition exists once (`rpgmaps_acp_sub_tabs()`) instead of six copies.

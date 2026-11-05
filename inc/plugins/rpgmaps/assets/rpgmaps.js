@@ -318,11 +318,11 @@
                 html += '<textarea id="description-edit-' + house.id + '" class="description-edit-textarea">'
                     + (house.description_raw ? this.escapeHtml(house.description_raw) : '') + '</textarea>';
                 html += '<div class="description-edit-controls">';
-                html += '<button class="btn-small" onclick="RPGMaps.toggleDescriptionEdit(' + house.id + ')" id="edit-btn-' + house.id + '">'
+                html += '<button type="button" class="button rpgmaps-btn-small" onclick="RPGMaps.toggleDescriptionEdit(' + house.id + ')" id="edit-btn-' + house.id + '">'
                     + this.config.lang.edit + '</button>';
-                html += '<button class="btn-small hidden" onclick="RPGMaps.saveDescription(' + house.id + ')" id="save-btn-' + house.id + '">'
+                html += '<button type="button" class="button rpgmaps-btn-small hidden" onclick="RPGMaps.saveDescription(' + house.id + ')" id="save-btn-' + house.id + '">'
                     + this.config.lang.save + '</button>';
-                html += '<button class="btn-small btn-cancel hidden" onclick="RPGMaps.cancelDescriptionEdit(' + house.id + ')" id="cancel-btn-' + house.id + '">'
+                html += '<button type="button" class="button rpgmaps-btn-small hidden" onclick="RPGMaps.cancelDescriptionEdit(' + house.id + ')" id="cancel-btn-' + house.id + '">'
                     + this.config.lang.cancel + '</button>';
                 html += '</div>';
             }
@@ -374,7 +374,7 @@
                     + '<label>' + this.escapeHtml(this.config.lang.house_name_optional || '') + '</label>'
                     + '<input type="text" id="house-name-edit-' + house.id + '" maxlength="255" value="' + (currentHouseName ? this.escapeHtml(currentHouseName) : '') + '">'
                     + '</div>';
-                html += '<button class="btn-small" onclick="RPGMaps.saveHouseSettings(' + house.id + ')">'
+                html += '<button type="button" class="button rpgmaps-btn-small" onclick="RPGMaps.saveHouseSettings(' + house.id + ')">'
                     + this.config.lang.save + '</button>';
                 html += '</div>';
             }
@@ -383,10 +383,10 @@
             if (this.config.is_logged_in) {
                 html += '<div class="rpgmaps-tooltip-actions trow2">';
                 if (occupants.length < house.max_occupants) {
-                    html += '<button class="button rpgmaps-btn-movein" onclick="RPGMaps.showMoveInModal(' + house.id + ')">'
+                    html += '<button type="button" class="button rpgmaps-btn-movein" onclick="RPGMaps.showMoveInModal(' + house.id + ')">'
                         + this.config.lang.move_in + '</button>';
                 }
-                html += '<button class="button rpgmaps-btn-moveout" onclick="RPGMaps.showMoveOutModal(' + house.id + ')">'
+                html += '<button type="button" class="button rpgmaps-btn-moveout" onclick="RPGMaps.showMoveOutModal(' + house.id + ')">'
                     + this.config.lang.move_out + '</button>';
                 html += '</div>';
             }
@@ -412,12 +412,12 @@
             const houseName = houseNameInput.value.trim();
 
             if (!houseTypeId || houseTypeId <= 0) {
-                this.showMessage('error', 'Bitte einen gültigen Grundstücks-Typ wählen.');
+                this.showMessage('error', this.config.lang.invalid_house_type);
                 return;
             }
 
             if (!maxOccupants || maxOccupants < 1 || maxOccupants > 20) {
-                this.showMessage('error', 'Bitte eine gültige maximale Bewohnerzahl (1-20) eingeben.');
+                this.showMessage('error', this.config.lang.invalid_max_occupants);
                 return;
             }
 
@@ -467,9 +467,9 @@
                         }
                     }
 
-                    this.showMessage('success', response.message || 'Haus-Einstellungen gespeichert.');
+                    this.showMessage('success', response.message || this.config.lang.house_settings_saved);
                 } else {
-                    const errorMessage = response.message || response.error || 'Fehler beim Speichern der Haus-Einstellungen';
+                    const errorMessage = response.message || response.error || this.config.lang.house_settings_error;
                     this.showMessage('error', errorMessage);
                 }
             });
@@ -517,8 +517,8 @@
                         <p>${this.config.lang.confirm_move_in}</p>
                         <form id="form-move-in">
                             <input type="hidden" name="house_id" value="${houseId}">
-                            <button type="submit" class="btn btn-primary">${this.config.lang.yes}</button>
-                            <button type="button" class="btn btn-secondary" onclick="RPGMaps.hideModal()">${this.config.lang.cancel}</button>
+                            <input type="submit" class="button" value="${this.escapeHtml(this.config.lang.yes)}" />
+                            <button type="button" class="button" onclick="RPGMaps.hideModal()">${this.config.lang.cancel}</button>
                         </form>
                     </div>
                 </div>
@@ -546,8 +546,8 @@
                         <p>${this.config.lang.confirm_move_out}</p>
                         <form id="form-move-out">
                             <input type="hidden" name="house_id" value="${houseId}">
-                            <button type="submit" class="btn btn-primary">${this.config.lang.yes}</button>
-                            <button type="button" class="btn btn-secondary" onclick="RPGMaps.hideModal()">${this.config.lang.cancel}</button>
+                            <input type="submit" class="button" value="${this.escapeHtml(this.config.lang.yes)}" />
+                            <button type="button" class="button" onclick="RPGMaps.hideModal()">${this.config.lang.cancel}</button>
                         </form>
                     </div>
                 </div>

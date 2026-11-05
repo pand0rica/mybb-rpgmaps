@@ -57,7 +57,6 @@ function rpgmaps_activate()
     require_once MYBB_ROOT . 'inc/plugins/rpgmaps/core/installer.php';
     rpgmaps_update_tables();
     rpgmaps_install_templates();
-    rpgmaps_update_templates();
     rpgmaps_update_css();
     rpgmaps_install_alert_type();
 }
