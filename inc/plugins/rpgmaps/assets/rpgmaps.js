@@ -57,18 +57,10 @@
             if (this.config.map_id > 0) {
                 this.loadMapData();
                 
-                // Wait for map image to load before scaling
+                this.scalePlots();
                 const mapImage = document.querySelector('.rpgmaps-map-image');
-                if (mapImage) {
-                    if (mapImage.complete) {
-                        // Image is already loaded (cached)
-                        this.scalePlots();
-                    } else {
-                        // Wait for image to load
-                        mapImage.addEventListener('load', () => {
-                            this.scalePlots();
-                        });
-                    }
+                if (mapImage && !mapImage.complete) {
+                    mapImage.addEventListener('load', () => this.scalePlots());
                 }
                 
                 // Also scale on window resize
@@ -97,22 +89,23 @@
                 return;
             }
             
-            const mapImage = document.querySelector('.rpgmaps-map-image');
-            if (!mapImage) {
-                console.warn('RPGMaps: Map image not found');
+            // Layout is based on the wrapper and the stored map size, not on the image,
+            // so plots stay inside the map box even if the image is slow or missing.
+            const wrapper = document.querySelector('.rpgmaps-map-wrapper');
+            if (!wrapper) {
+                console.warn('RPGMaps: Map wrapper not found');
                 return;
             }
-            
-            // Get the actual displayed size of the map image
-            const displayedWidth = mapImage.clientWidth;
-            const displayedHeight = mapImage.clientHeight;
-            
-            
-            if (displayedWidth <= 0 || displayedHeight <= 0) {
-                console.warn('RPGMaps: Map image has no dimensions yet');
+            wrapper.style.aspectRatio = origWidth + ' / ' + origHeight;
+
+            const displayedWidth = wrapper.clientWidth;
+            const displayedHeight = displayedWidth * origHeight / origWidth;
+
+            if (displayedWidth <= 0) {
+                console.warn('RPGMaps: Map wrapper has no dimensions yet');
                 return;
             }
-            
+
             // Calculate scale factors
             const scaleX = displayedWidth / origWidth;
             const scaleY = displayedHeight / origHeight;
