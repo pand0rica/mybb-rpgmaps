@@ -71,10 +71,19 @@ if ($map_id <= 0) {
             $rpgmaps_map_url = $mybb->settings['bburl'] . '/rpgmaps.php?map_id=' . $rpgmaps_map_id;
             $rpgmaps_map_title = htmlspecialchars_uni($map['title']);
             $rpgmaps_map_description = htmlspecialchars_uni($map['description']);
+
+            // Thumbnail: use the real map image when available, otherwise a neutral placeholder frame
+            $map_filename = isset($map['filename']) ? trim($map['filename']) : '';
+            if ($map_filename !== '') {
+                $rpgmaps_map_thumb = '<img src="' . $mybb->settings['bburl'] . '/inc/plugins/rpgmaps/assets/maps/' . htmlspecialchars_uni($map_filename) . '" alt="' . $rpgmaps_map_title . '" class="rpgmaps-map-thumb-img" loading="lazy">';
+            } else {
+                $rpgmaps_map_thumb = '<span class="rpgmaps-map-thumb-empty"></span>';
+            }
+
             eval('$map_list_items .= "' . $templates->get('rpgmaps_map_row') . '";');
         }
     } else {
-        $map_list_items = '<tr><td class="trow1" align="center">' . $lang->rpgmaps_no_maps . '</td></tr>';
+        $map_list_items = '<div class="trow1 rpgmaps-map-empty">' . $lang->rpgmaps_no_maps . '</div>';
     }
     
     // Prepare variables for template
