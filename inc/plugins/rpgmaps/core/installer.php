@@ -260,27 +260,30 @@ function rpgmaps_get_templates()
 <body>
 {$header}
 {$rpgmaps_notification}
-<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
-<tr>
-<td class="thead"><strong>{$lang->rpgmaps_maps}</strong></td>
-</tr>
+<div class="tborder rpgmaps-maplist">
+<div class="thead rpgmaps-maplist-head"><strong>{$lang->rpgmaps_maps}</strong></div>
+<div class="rpgmaps-map-grid">
 {$rpgmaps_map_list}
-</table>
+</div>
+</div>
 <br />
 {$footer}
 </body>
 </html>'),
 
-        'rpgmaps_map_row' => $db->escape_string('<tr>
-<td class="trow1">
-<strong><a href="{$rpgmaps_map_url}">{$rpgmaps_map_title}</a></strong>
-<div class="smalltext">{$rpgmaps_map_description}</div>
-<form action="{$mybb->settings[\'bburl\']}/rpgmaps.php" method="get" class="rpgmaps-inline-form">
+        'rpgmaps_map_row' => $db->escape_string('<div class="trow1 rpgmaps-map-card">
+<a href="{$rpgmaps_map_url}" class="rpgmaps-map-thumb" title="{$rpgmaps_map_title}">{$rpgmaps_map_thumb}</a>
+<div class="rpgmaps-map-card-body">
+<a href="{$rpgmaps_map_url}" class="rpgmaps-map-card-title">{$rpgmaps_map_title}</a>
+<div class="rpgmaps-map-card-desc smalltext">{$rpgmaps_map_description}</div>
+</div>
+<div class="rpgmaps-map-card-foot">
+<form action="{$mybb->settings[\'bburl\']}/rpgmaps.php" method="get">
 <input type="hidden" name="map_id" value="{$rpgmaps_map_id}" />
 <input type="submit" class="button" value="{$lang->rpgmaps_view_map}" />
 </form>
-</td>
-</tr>'),
+</div>
+</div>'),
 
         'modcp_nav_rpgmaps' => $db->escape_string('<tr><td class="trow1 smalltext"><a href="modcp.php?action=rpgmaps" class="modcp_nav_item modcp_nav_rpgmaps">{$lang->rpgmaps_name}{$count_badge}</a></td></tr>'),
 

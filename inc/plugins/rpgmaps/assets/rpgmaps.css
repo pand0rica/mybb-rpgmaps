@@ -563,21 +563,146 @@
 }
 
 /* ========================================
-   Map List Styles
+   Map List – Übersichtsseite (Karten-Galerie)
+   Farben kommen aus dem Theme (.tborder/.thead/.trow1),
+   Layout und die eine Hover-Interaktion aus dem Plugin-CSS.
    ======================================== */
 
-.rpgmaps-map-item {
-    margin: 10px 0;
-    padding: 15px;
-    border-radius: 5px;
+.rpgmaps-maplist {
+    /* Kartenecken innerhalb des Theme-Rahmens halten */
+    overflow: hidden;
 }
 
-.rpgmaps-map-item h3 {
-    margin-top: 0;
+.rpgmaps-maplist-head {
+    padding: 8px 10px;
 }
 
-.rpgmaps-map-item p {
-    margin: 5px 0;
+/* Responsives Raster – füllt die Breite, bricht mobil auf eine Spalte um */
+.rpgmaps-map-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+    padding: 14px;
+}
+
+/* Eine Karte. Hintergrund/Textfarbe liefert .trow1 aus dem Theme. */
+.rpgmaps-map-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    /* dünne kartografische Akzentlinie an der Oberkante */
+    border-top: 3px solid var(--rpgmaps-accent);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.rpgmaps-map-card:hover,
+.rpgmaps-map-card:focus-within {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    transform: translateY(-2px);
+}
+
+/* Thumbnail: echtes Kartenbild, einheitliches Seitenverhältnis */
+.rpgmaps-map-thumb {
+    display: block;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: rgba(74, 111, 165, 0.08); /* zarter Akzent, solange das Bild lädt */
+}
+
+.rpgmaps-map-thumb-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.4s ease;
+}
+
+.rpgmaps-map-card:hover .rpgmaps-map-thumb-img {
+    transform: scale(1.04);
+}
+
+/* Platzhalter, wenn eine Karte noch kein Bild hat */
+.rpgmaps-map-thumb-empty {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(74, 111, 165, 0.06),
+        rgba(74, 111, 165, 0.06) 10px,
+        rgba(74, 111, 165, 0.12) 10px,
+        rgba(74, 111, 165, 0.12) 20px
+    );
+}
+
+.rpgmaps-map-card-body {
+    flex: 1 1 auto;
+    padding: 10px 12px 6px;
+}
+
+.rpgmaps-map-card-title {
+    display: block;
+    font-size: 15px;
+    font-weight: bold;
+    line-height: 1.3;
+}
+
+.rpgmaps-map-card-desc {
+    margin-top: 5px;
+    line-height: 1.45;
+    /* auf drei Zeilen begrenzen, damit die Karten gleich hoch bleiben */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.rpgmaps-map-card-desc:empty {
+    display: none;
+}
+
+.rpgmaps-map-card-foot {
+    padding: 8px 12px 12px;
+}
+
+.rpgmaps-map-card-foot form {
+    margin: 0;
+}
+
+.rpgmaps-map-card-foot .button {
+    width: 100%;
+}
+
+/* Sichtbarer Fokus für Tastaturnutzung */
+.rpgmaps-map-card a:focus-visible,
+.rpgmaps-map-card-foot .button:focus-visible {
+    outline: 2px solid var(--rpgmaps-accent);
+    outline-offset: 2px;
+}
+
+/* Leerzustand über die ganze Rasterbreite */
+.rpgmaps-map-empty {
+    grid-column: 1 / -1;
+    padding: 28px 16px;
+    text-align: center;
+    border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rpgmaps-map-card,
+    .rpgmaps-map-thumb-img {
+        transition: none;
+    }
+    .rpgmaps-map-card:hover,
+    .rpgmaps-map-card:focus-within {
+        transform: none;
+    }
+    .rpgmaps-map-card:hover .rpgmaps-map-thumb-img {
+        transform: none;
+    }
 }
 
 /* ========================================
